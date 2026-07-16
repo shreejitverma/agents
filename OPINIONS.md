@@ -1,7 +1,7 @@
-# Shivani's Engineering Opinions
+# Shreejit's Engineering Opinions
 
-These are Shivani's technical viewpoints.
-Agents should read this when a task would benefit from their judgment, taste, or defaults on how to build software.
+These are Shreejit's technical viewpoints.
+Agents should read this when a task would benefit from his judgment, taste, or defaults on how to build software.
 These are opinions, not laws.
 When a specific situation clearly argues against one of them, say so and choose the better path.
 
@@ -103,4 +103,4 @@ When a specific situation clearly argues against one of them, say so and choose 
 
 ## See also
 - `~/.claude/CLAUDE.md` (also at `~/AGENTS.md`) for the global operating manual.
-- `~/VOICE.md` for how Shivani communicates.
+- `~/VOICE.md` for how Shreejit communicates.

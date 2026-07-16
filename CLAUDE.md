@@ -56,6 +56,8 @@ Optimize for:
 - Preserve user changes; never overwrite work you did not author without clear reason.
 - Write clear commit messages that explain what changed and why.
 - Call out risky migrations, destructive commands, and irreversible operations before executing them.
+- Ship through `no-mistakes`, always: any change that reaches GitHub or any remote goes through the `no-mistakes` pipeline.
+  Never run a bare `git push` or create a PR outside it.
 
 ## Performance mindset
 - Measure before claiming something is faster.
@@ -137,8 +139,8 @@ This file is the single source of truth; `~/AGENTS.md` is a symlink to it.
   If you see one, even if it is not caused by your current work, still get it fixed.
 
 ### Pointers
-- Read `~/OPINIONS.md` when work would benefit from Shivani's viewpoints.
-- Read `~/VOICE.md` when speaking or posting on behalf of Shivani using their identity.
+- Read `~/OPINIONS.md` when work would benefit from Shreejit's viewpoints.
+- Read `~/VOICE.md` when speaking or posting on behalf of Shreejit using his identity.
 
 ### Default development system
 The integrated IC toolchain below is the default for development requests in every AI tool.
@@ -149,7 +151,7 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - `gh-axi`: GitHub operations (issues, PRs, CI runs, releases) in agent-ergonomic form.
 - `chrome-devtools-axi`: real-browser verification for anything with a web surface.
 - `lavish-axi`: render plans, reviews, and comparisons as rich artifacts when visual beats prose.
-- `no-mistakes`: the ship gate; nontrivial code changes reach the remote only through it (review, tests, lint, docs, push, PR, CI).
+- `no-mistakes`: the ship gate and the only way to ship; every change reaches the remote through it (review, tests, lint, docs, push, PR, CI), never via bare `git push`.
 - `stow` skill: sweep durable knowledge to disk before ending a long session.
 - `ic-doctor`: run when the toolchain itself misbehaves; each FAIL line names its fix.
 Setup and integration details live in `~/github/dotfiles-mac-nix/README.md`.
