@@ -121,6 +121,7 @@ These apply to all agents, not just Claude Code.
 This file is the single source of truth; `~/AGENTS.md` is a symlink to it.
 
 ### General
+- Never use emojis in any response, commit message, PR body, code comment, or written output. Not one, ever.
 - Never use the em dash "-"; use a plain dash "-" instead.
 - When writing commit messages, never auto-add the agent name as co-author.
 - Never manually modify `CHANGELOG.md` or any file marked as auto-generated.
@@ -136,8 +137,8 @@ This file is the single source of truth; `~/AGENTS.md` is a symlink to it.
   If you see one, even if it is not caused by your current work, still get it fixed.
 
 ### Pointers
-- Read `~/OPINIONS.md` when work would benefit from Shreejit's viewpoints.
-- Read `~/VOICE.md` when speaking or posting on behalf of Shreejit using his identity.
+- Read `~/OPINIONS.md` when work would benefit from Shivani's viewpoints.
+- Read `~/VOICE.md` when speaking or posting on behalf of Shivani using their identity.
 
 ### Default development system
 The integrated IC toolchain below is the default for development requests in every AI tool.
