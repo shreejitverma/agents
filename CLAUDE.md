@@ -143,8 +143,16 @@ This file is the single source of truth; `~/AGENTS.md` is a symlink to it.
 - Read `~/VOICE.md` when speaking or posting on behalf of Shreejit using his identity.
 
 ### Default development system
-The integrated IC toolchain below is the default for development requests in every AI tool.
-Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill encodes the full loop for any request to build, fix, or ship.
+firstmate is the default for all AI work: every request to build, fix, investigate, plan, or audit a project runs through the first mate, which dispatches and supervises crewmates in isolated worktrees and ships through the toolchain below.
+- Start every AI work session from the firstmate workspace with `fm` (Claude Code as the first mate; `fm <harness>` for another verified primary), then talk to the first mate: register the project there once and delegate the work.
+- Already running as the first mate (the firstmate `AGENTS.md` contract is loaded) or as a crewmate it launched: you are inside the system, so follow that contract or your brief and never launch another firstmate.
+- In a plain session outside firstmate, say once that firstmate is the default and give the `fm` command; if the user continues directly, treat that as their decision and follow the `ship` skill.
+The integrated IC toolchain below is what firstmate and its crew use, and it remains the default for direct development requests in every AI tool.
+Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill encodes the full loop for any direct request to build, fix, or ship.
+- `firstmate`: the agent-of-agents workspace at `~/github/firstmate`; the default supervisor for all AI work, entered with `fm`.
+- AI tool choice: Claude is the default AI tool and stays the default for every coding task (implementing, fixing, refactoring, reviewing, testing, anything that ships through a PR).
+  Use Gemini instead only when a task is clearly better served by it: multimodal evidence (images, screenshots, video, audio, scanned PDFs), one-pass ingestion of a very large corpus for a knowledge deliverable, or investigations centered on Google's own platforms (Gemini API, Vertex AI, Google Cloud, Firebase, Workspace, Android).
+  Pick between the two by best fit for the task, never by habit; inside firstmate the per-task dispatch profiles encode the same rule.
 - `quota-axi`: check subscription headroom before starting long or expensive agent runs.
 - `tasks-axi`: track multi-step work in the workspace backlog; record the PR when completing a task.
 - `treehouse`: one git worktree per independent stream of work; never juggle streams in one checkout.
@@ -154,7 +162,7 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - `no-mistakes`: the ship gate and the only way to ship; every change reaches the remote through it (review, tests, lint, docs, push, PR, CI), never via bare `git push`.
 - `stow` skill: sweep durable knowledge to disk before ending a long session.
 - `ic-doctor`: run when the toolchain itself misbehaves; each FAIL line names its fix.
-Setup and integration details live in `~/github/dotfiles-mac-nix/README.md`.
+Setup and integration details live in `~/github/dotfiles-nix/README.md`.
 
 ## AXI: The 10 Principles of an Agent-Friendly CLI
 These principles define what makes a CLI tool "an AXI" (Agent eXperience Interface).
