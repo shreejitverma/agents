@@ -1,7 +1,7 @@
 # agents
 
 Private personal layer for AI agents.
-This repo version-controls the files that define how agents work for me but are too personal for the public [dotfiles-mac-nix](https://github.com/shreejitverma/dotfiles-mac-nix) repo.
+This repo version-controls the files that define how agents work for me but are too personal for the public [dotfiles-nix](https://github.com/shreejitverma/dotfiles-nix) repo.
 
 | File | Linked to | Purpose |
 |---|---|---|
@@ -12,5 +12,5 @@ This repo version-controls the files that define how agents work for me but are 
 
 `~/AGENTS.md` remains a symlink to `~/.claude/CLAUDE.md`, so the cross-tool chain (`~/.codex/AGENTS.md` and friends) resolves through this repo.
 
-The symlinks are created by `ic-link` from dotfiles-mac-nix and verified by `ic-doctor`.
+The symlinks are created by `ic-link` from dotfiles-nix and verified by `ic-doctor`.
 Edit the files here (or through their symlinks; writes pass through), then commit and ship through the `no-mistakes` pipeline; never push bare.
