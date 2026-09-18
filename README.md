@@ -75,21 +75,31 @@ Until then, recreate them by hand on a fresh machine.
 Run `grok` and `gemini` once first so each installer creates its own top-level directory; only the subdirectories below are safe to create by hand.
 
 ```sh
-mkdir -p ~/.grok/agents ~/.grok/skills
-
-ln -sfn ~/github/agents/GROK.md                     ~/.grok/AGENTS.md
-ln -sfn ~/github/agents/grok/agents/implementer.md  ~/.grok/agents/implementer.md
-ln -sfn ~/github/agents/grok/agents/reviewer.md     ~/.grok/agents/reviewer.md
-ln -sfn ~/github/agents/GEMINI.md                   ~/.gemini/AGENTS.md
-
-for s in axi chrome-devtools-axi gh-axi gnhf lavish no-mistakes quota-axi ship stow tasks-axi; do
-  ln -sfn "../../.agents/skills/$s" "$HOME/.grok/skills/$s"
-done
+if [ -d ~/.grok ] && [ -d ~/.gemini ]; then
+  mkdir -p ~/.grok/agents
+  ln -sfn ~/github/agents/GROK.md                     ~/.grok/AGENTS.md
+  ln -sfn ~/github/agents/grok/agents/implementer.md  ~/.grok/agents/implementer.md
+  ln -sfn ~/github/agents/grok/agents/reviewer.md     ~/.grok/agents/reviewer.md
+  ln -sfn ~/github/agents/GEMINI.md                   ~/.gemini/AGENTS.md
+else
+  echo "run grok and gemini once each first; their installers own ~/.grok and ~/.gemini"
+fi
 ```
 
-The skills loop is not optional.
-`ic-link` mirrors the IC skill set into `~/.claude/skills` and `~/.codex/skills` only, so without it Grok starts with no IC skills at all.
-Keep the list in step with `ALL_SKILLS` in `ic-link`.
+Mirroring the IC skills into Grok's own directory is optional:
+
+```sh
+if [ -d ~/.grok ]; then
+  mkdir -p ~/.grok/skills
+  for s in axi chrome-devtools-axi gh-axi gnhf lavish no-mistakes quota-axi ship stow tasks-axi; do
+    ln -sfn "../../.agents/skills/$s" "$HOME/.grok/skills/$s"
+  done
+fi
+```
+
+`ic-link` populates `~/.claude/skills`, which is one of the four directories Grok discovers skills from, so the IC skills already reach Grok without this mirror.
+Its only effect is to make the same skills resolve from `~/.grok/skills` as well, and mirroring them into both is why `grok inspect` lists `axi` and `no-mistakes` twice.
+If you run it, keep the list in step with `ALL_SKILLS` in `ic-link`.
 
 Gemini also needs `context.fileName` in `~/.gemini/settings.json` set to `["GEMINI.md", "AGENTS.md"]`, or the linked manual is never loaded.
 

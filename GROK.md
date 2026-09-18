@@ -219,9 +219,10 @@ Project `AGENTS.md` files still load natively.
 Grok's own README documents exactly four skill-discovery directories, and these are the only ones in use here: `./.grok/skills/`, `<repo_root>/.grok/skills/`, `~/.grok/skills/` and `~/.claude/skills/`.
 `~/.agents/skills` is not one of them; it is the canonical store, reached only through the mirror symlinks pointing into it.
 Extra directories would need a `[skills] paths` key in `~/.grok/config.toml`, and there is no `[skills]` section there.
-Turning off Claude compatibility does not stop `~/.claude/skills/` being scanned, because that path is a native discovery location rather than a compatibility one; what the flag gates is the Claude plugin and synced skills, which `grok inspect` shows tagged `[claude] [disabled]`.
-The same IC set is mirrored into both `~/.grok/skills` and `~/.claude/skills`, so `grok inspect` currently lists `axi` and `no-mistakes` twice.
-That duplication is expected and harmless; do not treat it as corruption.
+`ic-link` populates `~/.claude/skills` with the IC set, so those skills reach Grok through that directory even when `~/.grok/skills` is absent.
+The same set is mirrored into both directories here, and `grok inspect` lists `axi` and `no-mistakes` twice as a result.
+Grok's README states that same-name skills are deduplicated, so that observation does not match the documented behavior and the mechanism is unexplained.
+It is recorded as measured; treat it as harmless rather than corruption, and do not build on a guess about its cause.
 
 Firstmate:
 - Primary: `fm grok` launches Grok as the first mate in the firstmate workspace.
