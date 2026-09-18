@@ -119,7 +119,6 @@ For substantial tasks, use this structure:
 These rules apply to every AI tool, not just one.
 This section is generated from a single shared source, so it is identical in every tool's manual by construction.
 Never copy a rule from here into a tool-specific file; edit the shared source instead.
-Each tool reads only its own generated manual.
 Never treat another tool's manual, config, MCP servers, or permission allowlists as your source of truth, even when the tool offers a compatibility mode that would load them.
 
 ### General
@@ -214,15 +213,13 @@ This manual is therefore linked at `~/.gemini/AGENTS.md`, and `~/.gemini/setting
 Run `agy models` for the live catalog; `fm-spawn` validates the model against that listing before launch and refuses an unlisted id.
 
 ### What Gemini is genuinely best at
-Take these ahead of Claude and Grok rather than as a fallback.
 - Multimodal evidence the worker must actually look at or listen to: images, screenshots, video, audio, scanned PDFs.
 - One-pass ingestion of a very large corpus for a knowledge deliverable, such as a document set, a transcript corpus, or an entire codebase read for a summary or audit rather than a change.
 - Investigations centered on Google's own platforms: Gemini API, Vertex AI, Google Cloud, Firebase, Workspace, Android.
 
 ### Quota shape
 `quota-axi` reports Gemini under the `agy` provider with a five-hour and a weekly window.
-Both currently report `spendPriority: unknown`, so Gemini can never win a quota-balanced array on rank; it is selected when it is the best fit for the class, or when every other candidate fails the runway floor.
-Treat unknown as eligible with disclosed uncertainty, never as a reason to skip it.
+Both currently report `spendPriority: unknown`.
 
 ### Wiring
 Gemini has no part in the `no-mistakes` pipeline by default.

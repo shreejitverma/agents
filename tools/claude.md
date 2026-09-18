@@ -1,6 +1,6 @@
 ## Claude Code on this Mac
 
-Claude Code is the default AI tool and the default first mate.
+Claude Code is the default first mate and the default `no-mistakes` pipeline agent.
 `fm` launches it as the primary; `no-mistakes` uses it as the pipeline agent whenever `~/.no-mistakes/config.yaml` is set to `agent: auto`.
 
 ### Where repo-local rules belong
@@ -16,11 +16,6 @@ Claude is the only tool here with more than one reasoning class, so pick deliber
 - `haiku` is for mechanical work only.
 - Effort runs `low`, `medium`, `high`, `xhigh`, `max`.
   Use `high` as the floor for anything intelligence-sensitive and `xhigh` for long-horizon agentic work; reserve `max` for correctness-over-cost cases.
-
-### Quota shape
-Claude Max has a five-hour session window nested inside a seven-day one, so the headline weekly percentage can look healthy while the session window is minutes from empty.
-Read the limiting window from `quota-axi`, never the top-line number.
-A 1M-context session drains the shared window far faster than a small one; size long runs against that before starting.
 
 ### Skills and wiring
 IC skills load from `~/.claude/skills`, mirrored from `~/.agents/skills` by `ic-link`.

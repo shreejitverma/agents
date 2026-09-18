@@ -119,7 +119,6 @@ For substantial tasks, use this structure:
 These rules apply to every AI tool, not just one.
 This section is generated from a single shared source, so it is identical in every tool's manual by construction.
 Never copy a rule from here into a tool-specific file; edit the shared source instead.
-Each tool reads only its own generated manual.
 Never treat another tool's manual, config, MCP servers, or permission allowlists as your source of truth, even when the tool offers a compatibility mode that would load them.
 
 ### General

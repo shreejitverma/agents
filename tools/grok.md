@@ -8,8 +8,9 @@
 
 Grok Build is installed as the native aarch64 binary (`~/.local/bin/grok`).
 That is the only copy on PATH.
-Do not install `@xai-official/grok` via npm; `ic-doctor` and fleet-ops doctor fail on a second copy.
-`ic-link` wires the personal layer; `ic-doctor` verifies it; firstmate already treats `grok` as a verified harness.
+Do not install `@xai-official/grok` via npm; a second copy on PATH shadows the native binary.
+The symlinks below are created by hand today: the installed `ic-link` and `ic-doctor` carry no Grok wiring yet, which is a pending follow-up blocked on dotfiles-nix PR 14.
+Firstmate already treats `grok` as a verified harness.
 
 | Path | Purpose |
 |---|---|
@@ -20,7 +21,6 @@ Do not install `@xai-official/grok` via npm; `ic-doctor` and fleet-ops doctor fa
 | `~/.grok/rules/` | Optional Grok-only global rules, not this manual |
 
 Compatibility with Claude and Cursor named instruction files, MCP servers, and hooks is off.
-Grok must not inherit `~/.claude/CLAUDE.md`, `~/.claude.json` MCP servers, or Claude permission allowlists.
 IC skills load from `~/.grok/skills` and `~/.agents/skills`.
 Project `AGENTS.md` files still load natively.
 
@@ -33,14 +33,13 @@ Firstmate:
 no-mistakes:
 - The pipeline agent is Claude by default (`agent: auto`). Switch `~/.no-mistakes/config.yaml` to `agent: grok` only while Claude has no runway; `agent_path_override.grok` already pins `~/.local/bin/grok`.
 - no-mistakes already launches Grok with Claude and Cursor compatibility environment variables forced off, plus `GROK_MEMORY=0`.
-- The pipeline agent still loads this file. It must not inherit `~/.claude/CLAUDE.md`, Claude MCP servers, or Claude permission allowlists.
+- The pipeline agent still loads this file.
 - Restore `agent: auto` as soon as Claude has runway again.
 
-Verify with `grok inspect` (this file must appear as a loaded instruction) and `ic-doctor`.
+Verify with `grok inspect`: this file must appear as a loaded instruction.
 
-Grok owns `~/.grok/config.toml` and rewrites it on start, so `ic-link` deliberately does not link it.
-`~/github/agents/grok/config.toml` is a reference copy only, not enforced on the machine.
+Grok owns `~/.grok/config.toml` and rewrites it on start, so `ic-link` deliberately does not link it and this repo does not version a copy of it.
 
 Measured on 1.0.34: the 10,000-character per-file cap in Grok's own README is not enforced.
-A 16,458-character manual loads whole, which `grok inspect` confirms by reporting it at 4.00 characters per token.
+A 16,485-character manual loaded whole, which `grok inspect` confirmed by reporting it at 4.00 characters per token.
 Re-measure with `grok inspect` after a Grok upgrade before assuming a long manual still loads.
