@@ -4,7 +4,7 @@
 # uses its own AGENTS.md, skills, and agents rather than inheriting Claude's.
 
 [cli]
-installer = "npm"
+installer = "curl"
 
 [models]
 default = "grok-4.6"

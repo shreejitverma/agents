@@ -179,6 +179,8 @@ Setup and integration details live in `~/github/dotfiles-nix/README.md`.
 ## Grok on this Mac
 
 Grok Build is installed as the native aarch64 binary (`~/.local/bin/grok`).
+That is the only copy on PATH.
+Do not install `@xai-official/grok` via npm; `ic-doctor` and fleet-ops doctor fail on a second copy.
 `ic-link` wires the personal layer; `ic-doctor` verifies it; firstmate already treats `grok` as a verified harness.
 
 | Path | Purpose |
@@ -200,6 +202,12 @@ Firstmate:
 - Crewmate: firstmate already dispatches `grok --always-approve` with `--model` / `--reasoning-effort` when the coding rule selects Grok as the Claude quota fallback.
 - Do not create `~/.grok`; the Grok installer owns that directory.
 - Do not install or overwrite files under `~/.grok/hooks/`; firstmate's spawn path owns the global turn-end hook.
+
+no-mistakes:
+- The pipeline agent is Grok while Claude quota is exhausted: `~/.no-mistakes/config.yaml` sets `agent: grok` and pins `agent_path_override.grok` to `~/.local/bin/grok`.
+- no-mistakes already launches Grok with Claude and Cursor compatibility environment variables forced off, plus `GROK_MEMORY=0`.
+- The pipeline agent still loads this file and `grok/config.toml`. It must not inherit `~/.claude/CLAUDE.md`, Claude MCP servers, or Claude permission allowlists.
+- Restore `agent: auto` in that config after Claude has runway again if you want Claude back as the gate agent.
 
 Verify with `grok inspect` (this file must appear as a loaded instruction) and `ic-doctor`.
 
