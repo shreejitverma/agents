@@ -102,5 +102,6 @@ When a specific situation clearly argues against one of them, say so and choose 
 - Confidence without evidence.
 
 ## See also
-- `~/.claude/CLAUDE.md` (also at `~/AGENTS.md`) for the global operating manual.
+- `~/.claude/CLAUDE.md` (also at `~/AGENTS.md`) for Claude Code's operating manual and the cross-tool default.
+- `~/.grok/AGENTS.md` for Grok Build's operating manual.
 - `~/VOICE.md` for how Shreejit communicates.

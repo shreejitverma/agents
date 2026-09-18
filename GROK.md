@@ -154,7 +154,7 @@ Keep the shared operating rules in lockstep when they change; Grok-only wiring s
 
 ### Default development system
 firstmate is the default for all AI work: every request to build, fix, investigate, plan, or audit a project runs through the first mate, which dispatches and supervises crewmates in isolated worktrees and ships through the toolchain below.
-- Start every AI work session from the firstmate workspace with `fm` (Claude Code as the first mate; `fm grok` or `fm <harness>` for another verified primary), then talk to the first mate: register the project there once and delegate the work.
+- Start every AI work session from the firstmate workspace with `fm` (Claude Code as the first mate; `fm <harness>` for another verified primary), then talk to the first mate: register the project there once and delegate the work.
 - Already running as the first mate (the firstmate `AGENTS.md` contract is loaded) or as a crewmate it launched: you are inside the system, so follow that contract or your brief and never launch another firstmate.
 - In a plain session outside firstmate, say once that firstmate is the default and give the `fm` command; if the user continues directly, treat that as their decision and follow the `ship` skill.
 The integrated IC toolchain below is what firstmate and its crew use, and it remains the default for direct development requests in every AI tool.
