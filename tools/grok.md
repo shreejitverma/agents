@@ -27,9 +27,7 @@ Grok's own README documents exactly four skill-discovery directories, and these 
 `~/.agents/skills` is not one of them; it is the canonical store, reached only through the mirror symlinks pointing into it.
 Extra directories would need a `[skills] paths` key in `~/.grok/config.toml`, and there is no `[skills]` section there.
 `ic-link` populates `~/.claude/skills` with the IC set, so those skills reach Grok through that directory even when `~/.grok/skills` is absent.
-The same set is mirrored into both directories here, and `grok inspect` lists `axi` and `no-mistakes` twice as a result.
-Grok's README states that same-name skills are deduplicated, so that observation does not match the documented behavior and the mechanism is unexplained.
-It is recorded as measured; treat it as harmless rather than corruption, and do not build on a guess about its cause.
+The same set is mirrored into `~/.grok/skills` here, and `grok inspect` lists some skills twice, including `axi` and `no-mistakes`.
 
 Firstmate:
 - Primary: `fm grok` launches Grok as the first mate in the firstmate workspace.

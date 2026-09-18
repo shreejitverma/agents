@@ -41,8 +41,9 @@ A reworded rule passes it: every real restatement removed from these files so fa
 Keeping rules unduplicated in substance is therefore a review responsibility, not something a green build proves.
 
 The manuals are generated at the repo root rather than into `build/`, because `ic-link` already points `~/.claude/CLAUDE.md` at that exact path.
-The known cost is that the generated manuals double as this repo's own project instructions, so a session working here loads the shared text twice.
-That hits all four readers: Claude through the root `CLAUDE.md`, Gemini through `context.fileName` listing both `GEMINI.md` and `AGENTS.md`, and Grok and Codex through the root `AGENTS.md`, which loads as a project file on top of their global manual.
+The known cost is that the generated manuals double as this repo's own project instructions, so a session working here loads the shared text more than once.
+Claude, Grok and Codex load it twice: once from the global manual, and again from the root `CLAUDE.md` or `AGENTS.md`, which loads as a project file on top of it.
+Gemini loads it three times, because `context.fileName` lists both `GEMINI.md` and `AGENTS.md` and the repo root now holds both, on top of the global `~/.gemini/AGENTS.md` link.
 Revisit the output location once `ic-link` is updated.
 
 Other versioned files:
@@ -98,7 +99,7 @@ fi
 ```
 
 `ic-link` populates `~/.claude/skills`, which is one of the four directories Grok discovers skills from, so the IC skills already reach Grok without this mirror.
-Its only effect is to make the same skills resolve from `~/.grok/skills` as well, and mirroring them into both is why `grok inspect` lists `axi` and `no-mistakes` twice.
+Its effect is to make the same skills resolve from `~/.grok/skills` as well, and `grok inspect` lists some skills twice, including `axi` and `no-mistakes`.
 If you run it, keep the list in step with `ALL_SKILLS` in `ic-link`.
 
 Gemini also needs `context.fileName` in `~/.gemini/settings.json` set to `["GEMINI.md", "AGENTS.md"]`, or the linked manual is never loaded.
