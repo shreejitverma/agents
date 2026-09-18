@@ -34,8 +34,11 @@ Repointing it is a pending follow-up: `ic-link` must retarget `~/AGENTS.md` and 
 
 Never hand-edit a generated manual; `bin/build-manuals --check` fails when one is stale or edited.
 Nothing runs that check automatically yet, so run it by hand, or from a hook, before committing; wiring it into `ic-doctor` is part of the same pending dotfiles-nix follow-up.
-`build-manuals` also refuses to build when a tuning file or a `grok/agents/` prompt restates a line from `CORE.md` or `ROUTING.md`, because a second copy of a rule is how manuals drift and how one tool ends up contradicting another.
+`build-manuals` also refuses to build when a tuning file or a `grok/agents/` prompt repeats a line from `CORE.md` or `ROUTING.md` byte for byte, because a second copy of a rule is how manuals drift and how one tool ends up contradicting another.
 The agent prompts are covered because they set `agents_md: true`, so a Grok subagent loads the generated manual next to the prompt and would otherwise see the same rule twice, in two strengths.
+That comparison is whole-line and exact, so it is a backstop against verbatim copies and nothing more.
+A reworded rule passes it: every real restatement removed from these files so far was a paraphrase, found by reading rather than by the build.
+Keeping rules unduplicated in substance is therefore a review responsibility, not something a green build proves.
 
 The manuals are generated at the repo root rather than into `build/`, because `ic-link` already points `~/.claude/CLAUDE.md` at that exact path.
 The known cost is that the generated manuals double as this repo's own project instructions, so a session working here loads the shared text twice.
@@ -60,23 +63,34 @@ Instead `~/.gemini/AGENTS.md` links to the generated manual and `~/.gemini/setti
 Grok owns `~/.grok/config.toml` and rewrites it on start, so it is neither linked nor versioned here.
 
 Grok's README documents a 10,000-character cap per rules file.
-Measured on Grok 1.0.34 it is not enforced: a 16,485-character manual loaded whole, which `grok inspect` confirmed at 4.00 characters per token.
+Measured on Grok 1.0.34 it is not enforced: a 16,693-character manual loaded whole, which `grok inspect` confirmed at 4.00 characters per token.
+That is a record of one measurement, not a running total of the generated file, which changes with every edit.
 `build-manuals` therefore warns past a 20,000-character ceiling set above the current manual rather than at the documented cap, so steady state is silent and only unbounded growth is flagged.
 Re-measure with `grok inspect` after a Grok upgrade before assuming a long manual still loads.
 
 `ic-link` from dotfiles-nix wires only the Claude side: the `~/AGENTS.md` and `~/.codex/AGENTS.md` chain, `~/.claude/CLAUDE.md`, `~/.claude/settings.json`, `~/OPINIONS.md`, `~/VOICE.md` and the skill mirrors.
 `ic-doctor` verifies that same set and nothing else.
 The Grok and Gemini links below were made by hand and no tool recreates them; Grok wiring is incoming with dotfiles-nix PR 14, and Gemini wiring does not exist anywhere yet.
-Until then, recreate them by hand on a fresh machine:
+Until then, recreate them by hand on a fresh machine.
+Run `grok` and `gemini` once first so each installer creates its own top-level directory; only the subdirectories below are safe to create by hand.
 
 ```sh
+mkdir -p ~/.grok/agents ~/.grok/skills
+
 ln -sfn ~/github/agents/GROK.md                     ~/.grok/AGENTS.md
 ln -sfn ~/github/agents/grok/agents/implementer.md  ~/.grok/agents/implementer.md
 ln -sfn ~/github/agents/grok/agents/reviewer.md     ~/.grok/agents/reviewer.md
 ln -sfn ~/github/agents/GEMINI.md                   ~/.gemini/AGENTS.md
+
+for s in axi chrome-devtools-axi gh-axi gnhf lavish no-mistakes quota-axi ship stow tasks-axi; do
+  ln -sfn "../../.agents/skills/$s" "$HOME/.grok/skills/$s"
+done
 ```
 
+The skills loop is not optional.
+`ic-link` mirrors the IC skill set into `~/.claude/skills` and `~/.codex/skills` only, so without it Grok starts with no IC skills at all.
+Keep the list in step with `ALL_SKILLS` in `ic-link`.
+
 Gemini also needs `context.fileName` in `~/.gemini/settings.json` set to `["GEMINI.md", "AGENTS.md"]`, or the linked manual is never loaded.
-Do not create `~/.grok` or `~/.gemini` yourself; each tool's installer owns its own directory.
 
 Edit the sources here, run `bin/build-manuals`, then commit and ship through the `no-mistakes` pipeline; never push bare.

@@ -65,8 +65,13 @@ render() {  # <tool> -> manual on stdout
 # manual, so both are shared sources. The tuning files are checked because they
 # are compiled in; the Grok agent prompts are checked because they set
 # agents_md: true and so load the generated manual next to their own text.
+#
 # Headings, blank lines, table rows and horizontal rules are skipped; every
-# other line is compared whole, however short.
+# other line is compared whole and exact, however short. That makes this a
+# backstop against verbatim copies only. A reworded rule passes it, and every
+# real restatement found in these files so far was a paraphrase, caught by
+# reading rather than by this check. A green build is not evidence that no rule
+# was duplicated in substance; that remains a review responsibility.
 check_no_restated_rules() {
   local file=$1 dupes
   dupes=$(grep -vE '^\s*(#|$|\||-{3,})' "$file" \

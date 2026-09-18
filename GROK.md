@@ -214,8 +214,14 @@ Firstmate already treats `grok` as a verified harness.
 | `~/.grok/rules/` | Optional Grok-only global rules, not this manual |
 
 Compatibility with Claude and Cursor named instruction files, MCP servers, and hooks is off.
-IC skills load from `~/.grok/skills` and `~/.agents/skills`.
 Project `AGENTS.md` files still load natively.
+
+Grok's own README documents exactly four skill-discovery directories, and these are the only ones in use here: `./.grok/skills/`, `<repo_root>/.grok/skills/`, `~/.grok/skills/` and `~/.claude/skills/`.
+`~/.agents/skills` is not one of them; it is the canonical store, reached only through the mirror symlinks pointing into it.
+Extra directories would need a `[skills] paths` key in `~/.grok/config.toml`, and there is no `[skills]` section there.
+Turning off Claude compatibility does not stop `~/.claude/skills/` being scanned, because that path is a native discovery location rather than a compatibility one; what the flag gates is the Claude plugin and synced skills, which `grok inspect` shows tagged `[claude] [disabled]`.
+The same IC set is mirrored into both `~/.grok/skills` and `~/.claude/skills`, so `grok inspect` currently lists `axi` and `no-mistakes` twice.
+That duplication is expected and harmless; do not treat it as corruption.
 
 Firstmate:
 - Primary: `fm grok` launches Grok as the first mate in the firstmate workspace.
@@ -234,5 +240,6 @@ Verify with `grok inspect`: this file must appear as a loaded instruction.
 Grok owns `~/.grok/config.toml` and rewrites it on start, so `ic-link` deliberately does not link it and this repo does not version a copy of it.
 
 Measured on 1.0.34: the 10,000-character per-file cap in Grok's own README is not enforced.
-A 16,485-character manual loaded whole, which `grok inspect` confirmed by reporting it at 4.00 characters per token.
+A 16,693-character manual loaded whole, which `grok inspect` confirmed by reporting it at 4.00 characters per token.
+That figure records one measurement, not the current size of this file, which moves with every edit; the build's 20,000-character ceiling is what watches for growth.
 Re-measure with `grok inspect` after a Grok upgrade before assuming a long manual still loads.
