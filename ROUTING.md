@@ -29,4 +29,5 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - `no-mistakes`: the ship gate and the only way to ship; every change reaches the remote through it (review, tests, lint, docs, push, PR, CI), never via bare `git push`.
 - `stow` skill: sweep durable knowledge to disk before ending a long session.
 - `ic-doctor`: run when the toolchain itself misbehaves; each FAIL line names its fix.
-Setup and integration details live in `~/github/dotfiles-nix/README.md`.
+Toolchain setup and integration details live in `~/github/dotfiles-nix/README.md`.
+How these per-tool manuals are built, and which file to edit to change a rule, lives in `~/github/agents/README.md`.

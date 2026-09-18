@@ -31,6 +31,11 @@ Then run `bin/build-manuals`, which writes these:
 `~/AGENTS.md`, and `~/.codex/AGENTS.md` which links to it, both still resolve to `~/.claude/CLAUDE.md`, so Codex reads Claude's manual today, including its Claude-only section.
 This tool-neutral `AGENTS.md` exists to replace that chain.
 Repointing it is a pending follow-up: `ic-link` must retarget `~/AGENTS.md` and `ic-doctor` must stop failing on the new target, both blocked on dotfiles-nix PR 14.
+PR 14 must also correct `~/github/dotfiles-nix/README.md`, which still documents the single-manual model this repo retires.
+It claims that `~/.claude/CLAUDE.md` is the single source of truth for agent instructions, and concludes that Claude Code, Codex and anything else reading `AGENTS.md` all see one set of rules.
+Neither holds now: `CORE.md` is the only copy of the shared rules, and every tool reads its own manual compiled from it.
+Its clone step also still calls `CLAUDE.md` the agent operating manual, where `CLAUDE.md` is now a generated artifact.
+Those corrections belong in that repo, next to the `ic-link` and `ic-doctor` changes PR 14 already makes, not here.
 
 Never hand-edit a generated manual; `bin/build-manuals --check` fails when one is stale or edited.
 Nothing runs that check automatically yet, so run it by hand, or from a hook, before committing; wiring it into `ic-doctor` is part of the same pending dotfiles-nix follow-up.
