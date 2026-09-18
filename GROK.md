@@ -1,4 +1,9 @@
-# Global Operating Manual
+# Grok Operating Manual
+
+This is Grok Build's operating manual on this machine.
+It is a separate file from Claude Code's `CLAUDE.md`.
+`~/.grok/AGENTS.md` is a symlink to this file.
+Do not treat `~/.claude/CLAUDE.md` or `~/AGENTS.md` as Grok's source of truth.
 
 ## Mission
 Produce correct, production-grade work with strong reasoning, minimal fluff, and explicit verification.
@@ -114,16 +119,18 @@ For substantial tasks, use this structure:
 5. Risks / follow-ups
 
 ## What belongs elsewhere
-- Put repo-specific build commands, test commands, architecture notes, and naming rules in the project's `CLAUDE.md`.
-- Put path-specific or language-specific repo rules in `.claude/rules/`.
-- Put personal per-repo exceptions in `CLAUDE.local.md`.
-- Grok Build's operating manual, config, and agent definitions live in `GROK.md` and `grok/`. Do not fold Grok-only wiring into this file.
+- Put repo-specific build commands, test commands, architecture notes, and naming rules in the project's `AGENTS.md`.
+- Put path-specific or language-specific repo rules in `.grok/rules/`.
+- Put Grok-only global additions that are not this operating manual in `~/.grok/rules/`.
+- Put Grok settings in `~/github/agents/grok/config.toml` (linked to `~/.grok/config.toml`).
+- Put Grok agent definitions in `~/github/agents/grok/agents/`.
+- Claude Code's operating manual stays in `CLAUDE.md`. Do not fold Grok-only wiring into it.
 
 ## Cross-tool agent instructions
-These apply to all agents, not just Claude Code.
-This file is Claude Code's operating manual and the cross-tool default at `~/AGENTS.md` (Codex and other AGENTS.md readers).
-Grok Build uses a separate file, `GROK.md`, linked to `~/.grok/AGENTS.md`.
-Keep the shared operating rules in lockstep when they change.
+These apply to all agents.
+Claude Code's copy lives in `CLAUDE.md` and is the default at `~/AGENTS.md` for Codex and other AGENTS.md readers.
+This file is Grok Build's copy.
+Keep the shared operating rules in lockstep when they change; Grok-only wiring stays in the Grok-on-this-Mac section below.
 
 ### General
 - Never use emojis in any response, commit message, PR body, code comment, or written output. Not one, ever.
@@ -168,6 +175,41 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - `stow` skill: sweep durable knowledge to disk before ending a long session.
 - `ic-doctor`: run when the toolchain itself misbehaves; each FAIL line names its fix.
 Setup and integration details live in `~/github/dotfiles-nix/README.md`.
+
+## Grok on this Mac
+
+Grok Build is installed as the native aarch64 binary (`~/.local/bin/grok`).
+That is the only copy on PATH.
+Do not install `@xai-official/grok` via npm; `ic-doctor` and fleet-ops doctor fail on a second copy.
+`ic-link` wires the personal layer; `ic-doctor` verifies it; firstmate already treats `grok` as a verified harness.
+
+| Path | Purpose |
+|---|---|
+| `~/github/agents/GROK.md` | This operating manual; linked to `~/.grok/AGENTS.md` |
+| `~/github/agents/grok/config.toml` | Grok user config; linked to `~/.grok/config.toml` |
+| `~/github/agents/grok/agents/` | User agent definitions; linked into `~/.grok/agents/` |
+| `~/.grok/skills/` | IC skill mirrors, same set as Claude and Codex |
+| `~/.grok/hooks/` | Firstmate-owned turn-end hooks; never replace this directory |
+| `~/.grok/rules/` | Optional Grok-only global rules, not this manual |
+
+Compatibility with Claude and Cursor named instruction files, MCP servers, and hooks is off.
+Grok must not inherit `~/.claude/CLAUDE.md`, `~/.claude.json` MCP servers, or Claude permission allowlists.
+IC skills load from `~/.grok/skills` and `~/.agents/skills`.
+Project `AGENTS.md` files still load natively.
+
+Firstmate:
+- Primary: `fm grok` launches Grok as the first mate in the firstmate workspace.
+- Crewmate: firstmate already dispatches `grok --always-approve` with `--model` / `--reasoning-effort` when the coding rule selects Grok as the Claude quota fallback.
+- Do not create `~/.grok`; the Grok installer owns that directory.
+- Do not install or overwrite files under `~/.grok/hooks/`; firstmate's spawn path owns the global turn-end hook.
+
+no-mistakes:
+- The pipeline agent is Grok while Claude quota is exhausted: `~/.no-mistakes/config.yaml` sets `agent: grok` and pins `agent_path_override.grok` to `~/.local/bin/grok`.
+- no-mistakes already launches Grok with Claude and Cursor compatibility environment variables forced off, plus `GROK_MEMORY=0`.
+- The pipeline agent still loads this file and `grok/config.toml`. It must not inherit `~/.claude/CLAUDE.md`, Claude MCP servers, or Claude permission allowlists.
+- Restore `agent: auto` in that config after Claude has runway again if you want Claude back as the gate agent.
+
+Verify with `grok inspect` (this file must appear as a loaded instruction) and `ic-doctor`.
 
 ## AXI: The 10 Principles of an Agent-Friendly CLI
 These principles define what makes a CLI tool "an AXI" (Agent eXperience Interface).
