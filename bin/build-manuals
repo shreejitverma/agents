@@ -13,10 +13,12 @@
 #   build-manuals            regenerate the manuals at the repo root
 #   build-manuals --check    verify they match the sources; non-zero if stale
 #
-# --check has no automatic caller yet: run it by hand, or from a hook, before
-# committing, so a hand-edited or stale manual is caught instead of silently
-# shipping different rules to different tools. Wiring it into ic-doctor is a
-# pending follow-up, blocked on dotfiles-nix PR 14.
+# .github/workflows/ci.yml calls --check, and shellcheck over this script, for
+# every pull request and every push to main, so a hand-edited or stale manual
+# cannot reach main unseen. That report lands after the commit is written, so
+# running --check locally first is still worth the keystrokes. Catching a
+# machine that has drifted outside CI needs the same check inside ic-doctor,
+# which is a pending follow-up blocked on dotfiles-nix PR 14.
 set -euo pipefail
 
 REPO="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
