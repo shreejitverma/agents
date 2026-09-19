@@ -56,8 +56,6 @@ Other versioned files:
 
 | File | Linked to | Purpose |
 |---|---|---|
-| `CLAUDE.md` | `~/.claude/CLAUDE.md` | Claude Code operating manual, and the cross-tool default at `~/AGENTS.md` |
-| `GROK.md` | `~/.grok/AGENTS.md` | Grok Build operating manual (separate from Claude) |
 | `grok/agents/` | `~/.grok/agents/` | Grok user agent definitions (`implementer`, `reviewer`) |
 | `OPINIONS.md` | `~/OPINIONS.md` | Personal engineering viewpoints agents read on demand |
 | `VOICE.md` | `~/VOICE.md` | How agents speak or post on my behalf |
@@ -95,6 +93,29 @@ else
 fi
 ```
 
+Symlinks are all that block recreates.
+`tools/grok.md` also asserts that Claude and Cursor compatibility is off, which lives in `~/.grok/config.toml`.
+Grok owns and rewrites that file, so nothing here versions or writes it; after running `grok` once, apply these keys by hand to reach the state the manual describes.
+
+```toml
+[compat.claude]
+skills = false
+rules = false
+agents = false
+mcps = false
+hooks = false
+
+[compat.cursor]
+skills = false
+rules = false
+agents = false
+mcps = false
+hooks = false
+```
+
+These key names are recorded from the working config on this Mac, not from Grok's published documentation.
+Treat them as the intended setting and confirm the result with `grok inspect`.
+
 Mirroring the IC skills into Grok's own directory is optional:
 
 ```sh
@@ -111,10 +132,5 @@ Its effect is to make the same skills resolve from `~/.grok/skills` as well, and
 If you run it, keep the list in step with `ALL_SKILLS` in `ic-link`.
 
 Gemini also needs `context.fileName` in `~/.gemini/settings.json` set to `["GEMINI.md", "AGENTS.md"]`, or the linked manual is never loaded.
-`~/AGENTS.md` remains a symlink to `~/.claude/CLAUDE.md`, so Codex and other AGENTS.md readers resolve through Claude's file.
-Grok does not share that file: `ic-link` points `~/.grok/AGENTS.md` at `GROK.md`.
-
-The shared operating rules in `CLAUDE.md` and `GROK.md` should stay in lockstep.
-Grok-only wiring (config, agent definitions, compatibility flags, Mac install paths) stays in `GROK.md` and `grok/`.
 
 Edit the sources here, run `bin/build-manuals`, then commit and ship through the `no-mistakes` pipeline; never push bare.
