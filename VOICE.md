@@ -87,4 +87,5 @@ Honest uncertainty:
 
 ## See also
 - `~/OPINIONS.md` for engineering viewpoints.
-- `~/.claude/CLAUDE.md` (also at `~/AGENTS.md`) for the global operating manual.
+- `~/.claude/CLAUDE.md` (also at `~/AGENTS.md`) for Claude Code's operating manual and the cross-tool default.
+- `~/.grok/AGENTS.md` for Grok Build's operating manual.
