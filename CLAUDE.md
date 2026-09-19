@@ -115,11 +115,17 @@ For substantial tasks, use this structure:
 4. Verification
 5. Risks / follow-ups
 
+## What belongs elsewhere
+- Put repo-specific build commands, test commands, architecture notes, and naming rules in the project's `CLAUDE.md`.
+- Put path-specific or language-specific repo rules in `.claude/rules/`.
+- Put personal per-repo exceptions in `CLAUDE.local.md`.
+- Grok Build's operating manual, config, and agent definitions live in `GROK.md` and `grok/`. Do not fold Grok-only wiring into this file.
+
 ## Cross-tool agent instructions
-These rules apply to every AI tool, not just one.
-This section is generated from a single shared source, so it is identical in every tool's manual by construction.
-Never copy a rule from here into a tool-specific file; edit the shared source instead.
-Never treat another tool's manual, config, MCP servers, or permission allowlists as your source of truth, even when the tool offers a compatibility mode that would load them.
+These apply to all agents, not just Claude Code.
+This file is Claude Code's operating manual and the cross-tool default at `~/AGENTS.md` (Codex and other AGENTS.md readers).
+Grok Build uses a separate file, `GROK.md`, linked to `~/.grok/AGENTS.md`.
+Keep the shared operating rules in lockstep when they change.
 
 ### General
 - Never use emojis in any response, commit message, PR body, code comment, or written output. Not one, ever.

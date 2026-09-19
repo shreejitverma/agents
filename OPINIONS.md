@@ -103,4 +103,6 @@ When a specific situation clearly argues against one of them, say so and choose 
 
 ## See also
 - `~/github/agents/README.md` for the generated per-tool operating manuals and which one your tool reads.
+- `~/.claude/CLAUDE.md` (also at `~/AGENTS.md`) for Claude Code's operating manual and the cross-tool default.
+- `~/.grok/AGENTS.md` for Grok Build's operating manual.
 - `~/VOICE.md` for how Shreejit communicates.
