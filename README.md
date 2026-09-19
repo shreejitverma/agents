@@ -58,7 +58,6 @@ Other versioned files:
 |---|---|---|
 | `CLAUDE.md` | `~/.claude/CLAUDE.md` | Claude Code operating manual, and the cross-tool default at `~/AGENTS.md` |
 | `GROK.md` | `~/.grok/AGENTS.md` | Grok Build operating manual (separate from Claude) |
-| `grok/config.toml` | `~/.grok/config.toml` | Grok user config, compatibility flags, and model defaults |
 | `grok/agents/` | `~/.grok/agents/` | Grok user agent definitions (`implementer`, `reviewer`) |
 | `OPINIONS.md` | `~/OPINIONS.md` | Personal engineering viewpoints agents read on demand |
 | `VOICE.md` | `~/VOICE.md` | How agents speak or post on my behalf |
