@@ -95,7 +95,7 @@ fi
 
 Symlinks are all that block recreates.
 `tools/grok.md` also asserts that Claude and Cursor compatibility is off, which lives in `~/.grok/config.toml`.
-Grok owns and rewrites that file, so nothing here versions or writes it; after running `grok` once, apply these keys by hand to reach the state the manual describes.
+Because that file is unversioned here, apply these keys by hand after running `grok` once to reach the state the manual describes.
 
 ```toml
 [compat.claude]
@@ -113,7 +113,7 @@ mcps = false
 hooks = false
 ```
 
-These key names are recorded from the working config on this Mac, not from Grok's published documentation.
+These key names are read from the working config on this Mac rather than from Grok's published documentation, and cover only the compatibility settings `tools/grok.md` asserts.
 Treat them as the intended setting and confirm the result with `grok inspect`.
 
 Mirroring the IC skills into Grok's own directory is optional:
