@@ -27,6 +27,6 @@ jobs:
 
       # Fails when a generated manual is stale or was edited by hand, and when a
       # tuning file or agent prompt repeats a CORE.md or ROUTING.md line byte for
-      # byte. It cannot catch a reworded rule; that stays a review responsibility.
+      # byte. What that comparison covers is documented in bin/build-manuals.
       - name: Verify every manual matches its sources
         run: bin/build-manuals --check
