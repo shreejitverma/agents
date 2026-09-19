@@ -38,7 +38,8 @@ Its clone step also still calls `CLAUDE.md` the agent operating manual, where `C
 Those corrections belong in that repo, next to the `ic-link` and `ic-doctor` changes PR 14 already makes, not here.
 
 Never hand-edit a generated manual; `bin/build-manuals --check` fails when one is stale or edited.
-Nothing runs that check automatically yet, so run it by hand, or from a hook, before committing; wiring it into `ic-doctor` is part of the same pending dotfiles-nix follow-up.
+`.github/workflows/ci.yml` runs that check, and shellcheck over the generator, on every pull request and every push to `main`.
+Run it locally too before committing, since CI reports after the fact; wiring it into `ic-doctor` so a drifted machine is caught outside CI is part of the pending dotfiles-nix follow-up.
 `build-manuals` also refuses to build when a tuning file or a `grok/agents/` prompt repeats a line from `CORE.md` or `ROUTING.md` byte for byte, because a second copy of a rule is how manuals drift and how one tool ends up contradicting another.
 The agent prompts are covered because they set `agents_md: true`, so a Grok subagent loads the generated manual next to the prompt and would otherwise see the same rule twice, in two strengths.
 That comparison is whole-line and exact, so it is a backstop against verbatim copies and nothing more.

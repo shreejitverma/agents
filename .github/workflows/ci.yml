@@ -1,0 +1,32 @@
+name: CI
+
+# The manuals are generated, and every tool on the machine reads one of them
+# through a symlink into this repo. A hand-edited or stale manual therefore
+# ships different rules to different tools silently. `--check` is what catches
+# that, so it runs here on every change rather than relying on someone
+# remembering to run it before committing.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  manuals:
+    name: Manuals match their sources
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Lint the generator
+        run: shellcheck -x bin/build-manuals
+
+      # Fails when a generated manual is stale or was edited by hand, and when a
+      # tuning file or agent prompt repeats a CORE.md or ROUTING.md line byte for
+      # byte. It cannot catch a reworded rule; that stays a review responsibility.
+      - name: Verify every manual matches its sources
+        run: bin/build-manuals --check
