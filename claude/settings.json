@@ -1,5 +1,8 @@
 {
-  "model": "claude-fable-5[1m]",
-  "theme": "dark",
-  "skipDangerousModePermissionPrompt": true
+  "model": "opus[1m]",
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": true
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark"
 }
