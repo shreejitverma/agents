@@ -1,8 +1,20 @@
 {
   "model": "opus[1m]",
   "enabledPlugins": {
-    "vercel@claude-plugins-official": true
+    "vercel@claude-plugins-official": true,
+    "compact-adviser@compact-adviser": true
+  },
+  "extraKnownMarketplaces": {
+    "compact-adviser": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/shreejitverma/github/compact-adviser"
+      }
+    }
   },
   "skipDangerousModePermissionPrompt": true,
-  "theme": "dark"
+  "theme": "dark",
+  "env": {
+    "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1"
+  }
 }

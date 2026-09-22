@@ -69,6 +69,10 @@ Instead `~/.gemini/AGENTS.md` links to the generated manual and `~/.gemini/setti
 
 Grok owns `~/.grok/config.toml` and rewrites it on start, so it is neither linked nor versioned here.
 
+`claude/settings.json` enables the `compact-adviser` plugin from a directory marketplace at the local clone `~/github/compact-adviser`, so that clone must exist and Claude reads the plugin's hooks live from it.
+Its function-hook mod needs `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`, set in the same file's `env`; without it `/compact-adviser` does not appear.
+Never save the TypeSafe API key through the `/compact-adviser` menu, because it writes `typesafeApiKey` into this tracked file; the key comes from the macOS Keychain via a dotfiles-nix shell wrapper instead.
+
 Grok's README documents a 10,000-character cap per rules file.
 Measured on Grok 1.0.34 it is not enforced: a 16,693-character manual loaded whole, which `grok inspect` confirmed at 4.00 characters per token.
 That is a record of one measurement, not a running total of the generated file, which changes with every edit.
