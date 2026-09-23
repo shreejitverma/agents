@@ -54,6 +54,7 @@ Other versioned files:
 | `claude/agents/` | `~/.claude/agents/` (one link per file) | Claude subagents: `cpp-reviewer`, `python-reviewer`, `silent-failure-hunter`, `pr-test-analyzer`, `type-design-analyzer`, `cpp-build-resolver` |
 | `claude/rules/` | `~/.claude/rules/` (one link per file) | Path-scoped Claude rules for C++ and Python files |
 | `claude/hooks/guard.py` | run from `claude/settings.json` | PreToolUse guard for destructive shell commands and check-config edits; tests in `claude/hooks/test_guard.py` |
+| `claude/hooks/post_edit.py` | run from `claude/settings.json` | PostToolUse lint feedback (ruff, clang-format) using only the edited project's own config; tests in `claude/hooks/test_post_edit.py` |
 | `ruff.toml` | none | Lint and format settings for the Python under `claude/hooks` |
 | `OPINIONS.md` | `~/OPINIONS.md` | Personal engineering viewpoints agents read on demand |
 | `VOICE.md` | `~/VOICE.md` | How agents speak or post on my behalf |
@@ -78,7 +79,7 @@ That is a record of one measurement, not a running total of the generated file, 
 Re-measure with `grok inspect` after a Grok upgrade before assuming a long manual still loads.
 
 `ic-link` from dotfiles-nix creates every link in the tables above: the `~/AGENTS.md` and `~/.codex/AGENTS.md` chain, the Claude manual, settings, subagents, and rules, `~/OPINIONS.md`, `~/VOICE.md`, the skill mirrors, and, when their installers have created `~/.grok` and `~/.gemini`, Grok's manual and agent definitions and Gemini's manual.
-`ic-doctor` verifies the same set, the guard hook script, and `bin/build-manuals --check`.
+`ic-doctor` verifies the same set, every hook script `claude/settings.json` runs, and `bin/build-manuals --check`.
 Run `grok` and `gemini` once first so each installer creates its own top-level directory; `ic-link` never creates either.
 
 Links are all `ic-link` recreates.
