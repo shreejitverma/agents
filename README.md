@@ -98,10 +98,17 @@ fi
 ```
 
 Symlinks are all that block recreates.
-`tools/grok.md` also asserts that Claude and Cursor compatibility is off, which lives in `~/.grok/config.toml`.
+`tools/grok.md` also asserts that Claude and Cursor compatibility is off and that Grok runs `grok-4.7` at high effort, all of which lives in `~/.grok/config.toml`.
 Because that file is unversioned here, apply these keys by hand after running `grok` once to reach the state the manual describes.
 
 ```toml
+[models]
+default = "grok-4.7"
+default_reasoning_effort = "high"
+
+[ui]
+fork_secondary_model = "grok-4.7"
+
 [compat.claude]
 skills = false
 rules = false
@@ -117,7 +124,7 @@ mcps = false
 hooks = false
 ```
 
-These key names are read from the working config on this Mac rather than from Grok's published documentation, and cover only the compatibility settings `tools/grok.md` asserts.
+These key names are read from the working config on this Mac rather than from Grok's published documentation, and cover only the model and compatibility settings `tools/grok.md` asserts.
 Treat them as the intended setting and confirm the result with `grok inspect`.
 
 Mirroring the IC skills into Grok's own directory is optional:

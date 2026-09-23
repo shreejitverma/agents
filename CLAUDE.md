@@ -169,14 +169,14 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - AI tool choice: route every task in two steps, by fit first and by quota second, across Claude Code Max, Grok Build, and Gemini Pro (run through `agy`, the only surface `quota-axi` can measure Gemini on).
   Step 1, classify the task and take the best model for that class.
   Tier 1, frontier reasoning (architecture, risky or wide refactors, concurrency and lifetime work, root-cause debugging, security-sensitive or measured performance work, ambiguous multi-file tasks): Claude Fable at high effort, and nothing else while Claude has runway; Fable's separate weekly window is spent only here.
-  Tier 2, standard well-specified coding (scoped features, known-cause fixes, tests, contained refactors, normal reviews): Claude Opus at 1M context (`opus[1m]`), Grok 4.6, and Gemini 3.1 Pro.
+  Tier 2, standard well-specified coding (scoped features, known-cause fixes, tests, contained refactors, normal reviews): Claude Opus 5.5 at 1M context (`claude-opus-5-5[1m]`) and Grok 4.7 (`grok-4.7`), both at high effort, and Gemini 3.1 Pro.
   Opus is the strongest of the three rather than a true peer, so a quota win for Grok or Gemini here trades some quality for subscription utilization, which is sound only because the spec is already clear and `no-mistakes` gates the result.
   Tier 3, mechanical work (renames, lint and format sweeps, typo fixes, bumps, boilerplate): Claude Haiku, Grok 4.5, and Gemini Flash are peers.
   Live or post-cutoff information and X research go to Grok first, then Gemini.
-  Multimodal evidence, one-pass ingestion of a very large corpus, and investigations of Google's own platforms go to Gemini first, then Claude Opus at 1M context.
+  Multimodal evidence, one-pass ingestion of a very large corpus, and investigations of Google's own platforms go to Gemini first, then Claude Opus 5.5 at 1M context.
   Step 2, read `quota-axi` and pick within the class: drop any candidate whose runway is `exhausted_now` or projected to exhaust before the task would finish, then among the surviving peers take the highest `spendPriority`, so the subscription with the most use-it-or-lose-it headroom before its reset gets the work.
   Unknown runway or `spendPriority` keeps a candidate eligible but never ranks it above a peer with known viable evidence.
-  Tier 1 never balances by `spendPriority`: when Claude cannot carry it, fall back in order to Claude Opus at 1M context (it draws on the shared window, so it survives a spent Fable week), Grok 4.6 at high effort, then Gemini 3.1 Pro, and if none has runway stop and report rather than downgrade.
+  Tier 1 never balances by `spendPriority`: when Claude cannot carry it, fall back in order to Claude Opus 5.5 at 1M context (it draws on the shared window, so it survives a spent Fable week), Grok 4.7, then Gemini 3.1 Pro, and if none has runway stop and report rather than downgrade.
   Before any long run, size it against the limiting window, not the headline percentage: Claude Max has a five-hour session window inside the weekly one, a 1M-context session drains it far faster than a small one, and a single long gate run can drain a whole week of Grok credits.
   Re-read `quota-axi` when a task is handed over mid-flight, and restore any tool setting changed for a fallback once the preferred tool has runway again.
   Pick by these rules, never by habit; inside firstmate `config/crew-dispatch.json` encodes the same rules and `quota-array-dispatch` resolves each peer array.
@@ -206,10 +206,12 @@ Claude Code is the default first mate and the default `no-mistakes` pipeline age
 Claude is the only tool here with more than one reasoning class, so pick deliberately rather than taking the session default.
 - `fable` is the strongest model and has its own weekly window, separate from every other Claude model.
   Spend it only on Tier 1 frontier work, because exhausting it does not touch the shared window but cannot be refilled early.
-- `opus[1m]` is the workhorse at 1M context and draws on the shared `all_models` window, so it still has runway after a spent Fable week.
+- `claude-opus-5-5[1m]` (Opus 5.5) is the workhorse at 1M context and draws on the shared `all_models` window, so it still has runway after a spent Fable week.
+  It is pinned by full ID rather than the `opus[1m]` alias, which moves to each new Opus release unannounced; bump the pin deliberately in `claude/settings.json` and firstmate's `config/crew-dispatch.json` together.
 - `haiku` is for mechanical work only.
 - Effort runs `low`, `medium`, `high`, `xhigh`, `max`.
   Use `high` as the floor for anything intelligence-sensitive and `xhigh` for long-horizon agentic work; reserve `max` for correctness-over-cost cases.
+  Opus 5.5 ships defaulting to `medium`, and a top-level `effortLevel` in the user settings file (`~/.claude/settings.json`, this repo's `claude/settings.json`) does not apply to it, so that file sets its default to `high` through `modelSettings.claude-opus-5-5.effortLevel`, which takes precedence over any top-level key; `/effort` with Enter overwrites that entry.
 
 ### Skills and wiring
 IC skills load from `~/.claude/skills`, mirrored from `~/.agents/skills` by `ic-link`.
