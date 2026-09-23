@@ -106,6 +106,9 @@ Because that file is unversioned here, apply these keys by hand after running `g
 default = "grok-4.7"
 default_reasoning_effort = "high"
 
+[ui]
+fork_secondary_model = "grok-4.7"
+
 [compat.claude]
 skills = false
 rules = false
