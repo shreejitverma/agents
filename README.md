@@ -25,23 +25,17 @@ Then run `bin/build-manuals`, which writes these:
 | `CLAUDE.md` | `~/.claude/CLAUDE.md` | core + routing + Claude tuning |
 | `GROK.md` | `~/.grok/AGENTS.md` | core + routing + Grok tuning |
 | `GEMINI.md` | `~/.gemini/AGENTS.md` | core + routing + Gemini tuning |
-| `AGENTS.md` | no global symlink yet, see below | core + routing, no tool tuning |
+| `AGENTS.md` | `~/AGENTS.md` (and `~/.codex/AGENTS.md` through it) | core + routing, no tool tuning |
 
-`AGENTS.md` is generated as the neutral default for Codex and other `AGENTS.md` readers, but no global symlink points at it yet.
-`~/AGENTS.md`, and `~/.codex/AGENTS.md` which links to it, both still resolve to `~/.claude/CLAUDE.md`, so Codex reads Claude's manual today, including its Claude-only section.
-This tool-neutral `AGENTS.md` exists to replace that chain.
-Repointing it is a pending follow-up: `ic-link` must retarget `~/AGENTS.md` and `ic-doctor` must stop failing on the new target, both blocked on dotfiles-nix PR 14.
-PR 14 must also correct `~/github/dotfiles-nix/README.md`, which still documents the single-manual model this repo retires.
-It claims that `~/.claude/CLAUDE.md` is the single source of truth for agent instructions, and concludes that Claude Code, Codex and anything else reading `AGENTS.md` all see one set of rules.
-Neither holds now: `CORE.md` is the only copy of the shared rules, and every tool reads its own manual compiled from it.
-Its clone step also still calls `CLAUDE.md` the agent operating manual, where `CLAUDE.md` is now a generated artifact.
-Those corrections belong in that repo, next to the `ic-link` and `ic-doctor` changes PR 14 already makes, not here.
+`AGENTS.md` is the neutral default for Codex and any other `AGENTS.md` reader.
+`ic-link` points `~/AGENTS.md` at it, and `~/.codex/AGENTS.md` links to `~/AGENTS.md`, so no tool reads another tool's tuning.
+`ic-doctor` fails if `~/AGENTS.md` resolves to Claude's manual while this build exists.
 
 Never hand-edit a generated manual; `bin/build-manuals --check` fails when one is stale or edited.
 `.github/workflows/ci.yml` runs that check, and shellcheck over the generator, on every pull request and every push to `main`.
-Run it locally too before committing, since CI reports after the fact; wiring it into `ic-doctor` so a drifted machine is caught outside CI is part of the pending dotfiles-nix follow-up.
-`build-manuals` also refuses to build when a tuning file or a `grok/agents/` prompt repeats a line from `CORE.md` or `ROUTING.md` byte for byte, because a second copy of a rule is how manuals drift and how one tool ends up contradicting another.
-The agent prompts are covered because they set `agents_md: true`, so a Grok subagent loads the generated manual next to the prompt and would otherwise see the same rule twice, in two strengths.
+Run it locally too before committing, since CI reports after the fact; `ic-doctor` runs the same check, so a drifted machine is caught outside CI as well.
+`build-manuals` also refuses to build when a tuning file, a `grok/agents/` prompt, or a `claude/agents/` or `claude/rules/` file repeats a line from `CORE.md` or `ROUTING.md` byte for byte, because a second copy of a rule is how manuals drift and how one tool ends up contradicting another.
+The agent prompts are covered because a Grok subagent loads the generated manual next to its prompt (`agents_md: true`), and Claude loads its subagents and rules into the same context as its manual, so either would otherwise see the same rule twice, in two strengths.
 That comparison is whole-line and exact, so it is a backstop against verbatim copies and nothing more.
 A reworded rule passes it: every real restatement removed from these files so far was a paraphrase, found by reading rather than by the build.
 Keeping rules unduplicated in substance is therefore a review responsibility, not something a green build proves.
@@ -50,13 +44,17 @@ The manuals are generated at the repo root rather than into `build/`, because `i
 The known cost is that the generated manuals double as this repo's own project instructions, so a session working here loads the shared text more than once.
 Claude, Grok and Codex load it twice: once from the global manual, and again from the root `CLAUDE.md` or `AGENTS.md`, which loads as a project file on top of it.
 Gemini loads it three times, because `context.fileName` lists both `GEMINI.md` and `AGENTS.md` and the repo root now holds both, on top of the global `~/.gemini/AGENTS.md` link.
-Revisit the output location once `ic-link` is updated.
+Moving them would mean repointing every link `ic-link` writes, so the location stays until that cost buys something.
 
 Other versioned files:
 
 | File | Linked to | Purpose |
 |---|---|---|
 | `grok/agents/` | `~/.grok/agents/` | Grok user agent definitions (`implementer`, `reviewer`) |
+| `claude/agents/` | `~/.claude/agents/` (one link per file) | Claude subagents: `cpp-reviewer`, `python-reviewer`, `silent-failure-hunter`, `pr-test-analyzer`, `type-design-analyzer`, `cpp-build-resolver` |
+| `claude/rules/` | `~/.claude/rules/` (one link per file) | Path-scoped Claude rules for C++ and Python files |
+| `claude/hooks/guard.py` | run from `claude/settings.json` | PreToolUse guard for destructive shell commands and check-config edits; tests in `claude/hooks/test_guard.py` |
+| `ruff.toml` | none | Lint and format settings for the Python under `claude/hooks` |
 | `OPINIONS.md` | `~/OPINIONS.md` | Personal engineering viewpoints agents read on demand |
 | `VOICE.md` | `~/VOICE.md` | How agents speak or post on my behalf |
 | `claude/settings.json` | `~/.claude/settings.json` | Claude Code settings |
@@ -79,25 +77,11 @@ That is a record of one measurement, not a running total of the generated file, 
 `build-manuals` therefore warns past a 20,000-character ceiling set above the current manual rather than at the documented cap, so steady state is silent and only unbounded growth is flagged.
 Re-measure with `grok inspect` after a Grok upgrade before assuming a long manual still loads.
 
-`ic-link` from dotfiles-nix wires only the Claude side: the `~/AGENTS.md` and `~/.codex/AGENTS.md` chain, `~/.claude/CLAUDE.md`, `~/.claude/settings.json`, `~/OPINIONS.md`, `~/VOICE.md` and the skill mirrors.
-`ic-doctor` verifies that same set and nothing else.
-The Grok and Gemini links below were made by hand and no tool recreates them; Grok wiring is incoming with dotfiles-nix PR 14, and Gemini wiring does not exist anywhere yet.
-Until then, recreate them by hand on a fresh machine.
-Run `grok` and `gemini` once first so each installer creates its own top-level directory; only the subdirectories below are safe to create by hand.
+`ic-link` from dotfiles-nix creates every link in the tables above: the `~/AGENTS.md` and `~/.codex/AGENTS.md` chain, the Claude manual, settings, subagents, and rules, `~/OPINIONS.md`, `~/VOICE.md`, the skill mirrors, and, when their installers have created `~/.grok` and `~/.gemini`, Grok's manual and agent definitions and Gemini's manual.
+`ic-doctor` verifies the same set, the guard hook script, and `bin/build-manuals --check`.
+Run `grok` and `gemini` once first so each installer creates its own top-level directory; `ic-link` never creates either.
 
-```sh
-if [ -d ~/.grok ] && [ -d ~/.gemini ]; then
-  mkdir -p ~/.grok/agents
-  ln -sfn ~/github/agents/GROK.md                     ~/.grok/AGENTS.md
-  ln -sfn ~/github/agents/grok/agents/implementer.md  ~/.grok/agents/implementer.md
-  ln -sfn ~/github/agents/grok/agents/reviewer.md     ~/.grok/agents/reviewer.md
-  ln -sfn ~/github/agents/GEMINI.md                   ~/.gemini/AGENTS.md
-else
-  echo "run grok and gemini once each first; their installers own ~/.grok and ~/.gemini"
-fi
-```
-
-Symlinks are all that block recreates.
+Links are all `ic-link` recreates.
 `tools/grok.md` also asserts that Claude and Cursor compatibility is off and that Grok runs `grok-4.7` at high effort, all of which lives in `~/.grok/config.toml`.
 Because that file is unversioned here, apply these keys by hand after running `grok` once to reach the state the manual describes.
 
@@ -127,20 +111,8 @@ hooks = false
 These key names are read from the working config on this Mac rather than from Grok's published documentation, and cover only the model and compatibility settings `tools/grok.md` asserts.
 Treat them as the intended setting and confirm the result with `grok inspect`.
 
-Mirroring the IC skills into Grok's own directory is optional:
-
-```sh
-if [ -d ~/.grok ]; then
-  mkdir -p ~/.grok/skills
-  for s in axi chrome-devtools-axi gh-axi gnhf lavish no-mistakes quota-axi ship stow tasks-axi; do
-    ln -sfn "../../.agents/skills/$s" "$HOME/.grok/skills/$s"
-  done
-fi
-```
-
-`ic-link` populates `~/.claude/skills`, which is one of the four directories Grok discovers skills from, so the IC skills already reach Grok without this mirror.
-Its effect is to make the same skills resolve from `~/.grok/skills` as well, and `grok inspect` lists some skills twice, including `axi` and `no-mistakes`.
-If you run it, keep the list in step with `ALL_SKILLS` in `ic-link`.
+`ic-link` mirrors every IC skill into `~/.grok/skills` as well as `~/.claude/skills`, which is one of the four directories Grok discovers skills from, so `grok inspect` lists some skills twice, including `axi` and `no-mistakes`.
+That duplication is expected and harmless; the skill set itself is defined in dotfiles-nix, not here.
 
 Gemini also needs `context.fileName` in `~/.gemini/settings.json` set to `["GEMINI.md", "AGENTS.md"]`, or the linked manual is never loaded.
 

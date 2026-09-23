@@ -16,9 +16,9 @@
 # .github/workflows/ci.yml calls --check, and shellcheck over this script, for
 # every pull request and every push to main, so a hand-edited or stale manual
 # cannot reach main unseen. That report lands after the commit is written, so
-# running --check locally first is still worth the keystrokes. Catching a
-# machine that has drifted outside CI needs the same check inside ic-doctor,
-# which is a pending follow-up blocked on dotfiles-nix PR 14.
+# running --check locally first is still worth the keystrokes. ic-doctor in
+# dotfiles-nix runs the same check, so a clone that drifts outside CI is caught
+# on the machine too.
 set -euo pipefail
 
 REPO="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -66,7 +66,9 @@ render() {  # <tool> -> manual on stdout
 # contradicting another. CORE.md and ROUTING.md are both compiled into every
 # manual, so both are shared sources. The tuning files are checked because they
 # are compiled in; the Grok agent prompts are checked because they set
-# agents_md: true and so load the generated manual next to their own text.
+# agents_md: true and so load the generated manual next to their own text; the
+# Claude subagents and rules are checked because Claude loads them into the
+# same context as ~/.claude/CLAUDE.md.
 #
 # Headings, blank lines, table rows and horizontal rules are skipped; every
 # other line is compared whole and exact, however short. That makes this a
@@ -112,7 +114,7 @@ status=0
 for tool in $TOOLS; do
   check_no_restated_rules "tools/$tool.md" || status=1
 done
-for prompt in grok/agents/*.md; do
+for prompt in grok/agents/*.md claude/agents/*.md claude/rules/*.md; do
   [ -e "$prompt" ] || continue
   check_no_restated_rules "$prompt" || status=1
 done

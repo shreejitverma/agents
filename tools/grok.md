@@ -9,7 +9,7 @@
 Grok Build is installed as the native aarch64 binary (`~/.local/bin/grok`).
 That is the only copy on PATH.
 Do not install `@xai-official/grok` via npm; a second copy on PATH shadows the native binary.
-The symlinks below are created by hand today: the installed `ic-link` and `ic-doctor` carry no Grok wiring yet, which is a pending follow-up blocked on dotfiles-nix PR 14.
+`ic-link` creates the symlinks below once the Grok installer has made `~/.grok`, and `ic-doctor` verifies them.
 Firstmate already treats `grok` as a verified harness.
 
 | Path | Purpose |
