@@ -72,17 +72,17 @@ def human_present(env: Mapping[str, str]) -> bool:
 # quotes removed, redirections and their targets dropped, and comments skipped.
 # Command substitution, backticks and process substitution bodies are returned
 # separately so the caller scans them as command lines of their own. Heredoc
-# bodies are returned with the segment that introduced them, because a body is
-# data unless it feeds a shell or a SQL client.
+# bodies are returned separately too, because a body is data unless the same
+# command line feeds it to a shell or a SQL client.
 
 _SEPARATOR_CHARS = ";&|\n()"
+_REDIRECTION_OPERATORS = ("<<<", "<<-", "<<", "<>", "<&", ">>", ">&", ">|", "<", ">")
 
 
 @dataclass
 class Heredoc:
     delimiter: str
     strip_tabs: bool
-    segment_index: int
     body: str = ""
 
 
@@ -93,15 +93,73 @@ class Lexed:
     heredocs: list[Heredoc] = field(default_factory=list)
 
 
-def _match_close(text: str, start: int, open_ch: str, close_ch: str) -> int:
-    """Index of the close_ch matching an already-consumed open_ch, quote aware; -1 if none."""
+def _read_heredoc_body(text: str, pos: int, delimiter: str, strip_tabs: bool) -> tuple[str, int, bool]:
+    """Read a heredoc body starting at pos; return (body, index past the delimiter line, delimiter found)."""
+    n = len(text)
+    lines: list[str] = []
+    while pos < n:
+        nl = text.find("\n", pos)
+        line = text[pos:] if nl == -1 else text[pos:nl]
+        pos = n if nl == -1 else nl + 1
+        if (line.lstrip("\t") if strip_tabs else line) == delimiter:
+            return "\n".join(lines), pos, True
+        lines.append(line)
+    return "\n".join(lines), n, False
+
+
+def _read_heredoc_delimiter(text: str, i: int) -> tuple[str, bool, int]:
+    """Parse `<<[-] WORD` starting at i; return (delimiter with quotes removed, strip_tabs, index past WORD)."""
+    n = len(text)
+    i += 2
+    strip_tabs = i < n and text[i] == "-"
+    if strip_tabs:
+        i += 1
+    while i < n and text[i] in " \t":
+        i += 1
+    word: list[str] = []
+    while i < n and text[i] not in " \t\n;&|<>()":
+        c = text[i]
+        if c in "'\"":
+            j = text.find(c, i + 1)
+            if j == -1:
+                raise ValueError("unterminated heredoc delimiter")
+            word.append(text[i + 1 : j])
+            i = j + 1
+        elif c == "\\" and i + 1 < n:
+            word.append(text[i + 1])
+            i += 2
+        else:
+            word.append(c)
+            i += 1
+    return "".join(word), strip_tabs, i
+
+
+def _match_close(text: str, start: int, open_ch: str, close_ch: str, code: bool = False) -> int:
+    """Index of the close_ch matching an already-consumed open_ch, quote aware; -1 if none.
+
+    With code=True the span is shell code, so heredoc bodies inside it are skipped as data.
+    """
     depth = 1
     i = start
     n = len(text)
+    heredocs: list[tuple[str, bool]] = []
     while i < n:
         c = text[i]
         if c == "\\":
             i += 2
+            continue
+        if code and text.startswith("<<", i) and not text.startswith("<<<", i):
+            delimiter, strip_tabs, i = _read_heredoc_delimiter(text, i)
+            if delimiter:
+                heredocs.append((delimiter, strip_tabs))
+            continue
+        if c == "\n" and heredocs:
+            i += 1
+            for delimiter, strip_tabs in heredocs:
+                _, i, found = _read_heredoc_body(text, i, delimiter, strip_tabs)
+                if not found:
+                    return -1
+            heredocs = []
             continue
         if c == "'":
             j = text.find("'", i + 1)
@@ -136,7 +194,7 @@ def _skip_double_quoted(text: str, start: int) -> int:
         if c == '"':
             return i + 1
         if c == "$" and i + 1 < n and text[i + 1] == "(":
-            j = _match_close(text, i + 2, "(", ")")
+            j = _match_close(text, i + 2, "(", ")", code=True)
             if j == -1:
                 return -1
             i = j + 1
@@ -192,28 +250,21 @@ def lex(text: str) -> Lexed:
         segment.append(value)
 
     def end_segment() -> None:
-        nonlocal segment
+        nonlocal segment, skip_next_word, pending_heredoc
         end_word()
         if segment:
             out.segments.append(segment)
         segment = []
+        skip_next_word = False
+        pending_heredoc = None
 
     def consume_heredoc_bodies(pos: int) -> int:
         """pos is just past a newline; read every queued body and return the new position."""
         while queued_heredocs:
             doc = queued_heredocs.pop(0)
-            lines: list[str] = []
-            while pos <= n:
-                nl = text.find("\n", pos)
-                line = text[pos:] if nl == -1 else text[pos:nl]
-                pos = n + 1 if nl == -1 else nl + 1
-                check = line.lstrip("\t") if doc.strip_tabs else line
-                if check == doc.delimiter:
-                    break
-                lines.append(line)
-            doc.body = "\n".join(lines)
+            doc.body, pos, _ = _read_heredoc_body(text, pos, doc.delimiter, doc.strip_tabs)
             out.heredocs.append(doc)
-        return min(pos, n)
+        return pos
 
     while i < n:
         c = text[i]
@@ -252,7 +303,7 @@ def lex(text: str) -> Lexed:
                 in_word = True
                 i = j + 1
                 continue
-            j = _match_close(text, i + 2, "(", ")")
+            j = _match_close(text, i + 2, "(", ")", code=True)
             if j == -1:
                 raise ValueError("unterminated command substitution")
             out.substitutions.append(text[i + 2 : j])
@@ -282,7 +333,7 @@ def lex(text: str) -> Lexed:
 
         if c in "<>":
             if i + 1 < n and text[i + 1] == "(":  # process substitution
-                j = _match_close(text, i + 2, "(", ")")
+                j = _match_close(text, i + 2, "(", ")", code=True)
                 if j == -1:
                     raise ValueError("unterminated process substitution")
                 out.substitutions.append(text[i + 2 : j])
@@ -294,15 +345,15 @@ def lex(text: str) -> Lexed:
                 in_word = False
             else:
                 end_word()
-            j = i
-            while j < n and text[j] in "<>&|-":
-                j += 1
-            op = text[i:j]
-            i = j
-            if op.startswith("<<") and not op.startswith("<<<"):
-                pending_heredoc = Heredoc("", op.startswith("<<-"), len(out.segments))
+            op = next(o for o in _REDIRECTION_OPERATORS if text.startswith(o, i))
+            i += len(op)
+            if op in ("<<", "<<-"):
+                pending_heredoc = Heredoc("", op == "<<-")
             elif op.endswith("&") and i < n and (text[i].isdigit() or text[i] == "-"):
-                i += 1  # >&2, <&-: the fd is part of the operator
+                while i < n and text[i].isdigit():  # >&2, <&-, 3>&1-: the fd is part of the operator
+                    i += 1
+                if i < n and text[i] == "-":
+                    i += 1
             else:
                 skip_next_word = True
             continue
@@ -355,7 +406,7 @@ def _lex_double_quoted(text: str, start: int, word: list[str], out: Lexed) -> in
         if c == '"':
             return i + 1
         if c == "$" and i + 1 < n and text[i + 1] == "(":
-            j = _match_close(text, i + 2, "(", ")")
+            j = _match_close(text, i + 2, "(", ")", code=True)
             if j == -1:
                 raise ValueError("unterminated command substitution")
             out.substitutions.append(text[i + 2 : j])
@@ -491,16 +542,34 @@ def unwrap(words: list[str]) -> list[str]:
     return words[i:]
 
 
-def _shell_script_arg(words: list[str]) -> str | None:
-    """For `bash [-opts] -c SCRIPT`, return SCRIPT."""
-    for i, w in enumerate(words[1:], start=1):
+_SHELL_VALUE_OPTIONS = {"-o", "+o", "-O", "+O", "--rcfile", "--init-file"}
+
+
+def _shell_input(words: list[str]) -> tuple[str | None, bool]:
+    """For a shell invocation return (SCRIPT of `-c SCRIPT`, whether the script is read from stdin)."""
+    i = 1
+    while i < len(words):
+        w = words[i]
+        if w in _SHELL_VALUE_OPTIONS:
+            i += 2
+            continue
+        if w == "-":
+            return None, True
         if w == "--":
-            return None
-        if w.startswith("-") and not w.startswith("--") and "c" in w[1:]:
-            return words[i + 1] if i + 1 < len(words) else None
-        if not w.startswith("-"):
-            return None  # bash script.sh: a file, not inline code
-    return None
+            return None, i + 1 == len(words)
+        if w.startswith("--"):
+            i += 1
+            continue
+        if w[0] in "-+" and len(w) > 1:
+            flags = w[1:]
+            if w[0] == "-" and "c" in flags:
+                return (words[i + 1] if i + 1 < len(words) else None), False
+            if w[0] == "-" and "s" in flags:
+                return None, True
+            i += 2 if flags[-1] in "oO" else 1
+            continue
+        return None, False  # bash script.sh: a file, not inline code
+    return None, True
 
 
 # ---- git ----------------------------------------------------------------
@@ -879,7 +948,7 @@ def classify_words(words: list[str], depth: int = 0) -> list[Finding]:
         return []
     base = _base(words[0])
     if base in _SHELLS:
-        script = _shell_script_arg(words)
+        script, _ = _shell_input(words)
         return classify_command(script, depth + 1) if script else []
     if base == "eval":
         return classify_command(" ".join(words[1:]), depth + 1)
@@ -910,13 +979,16 @@ def classify_command(command: str, depth: int = 0) -> list[Finding]:
         findings.extend(classify_words(words, depth))
     for body in lexed.substitutions:
         findings.extend(classify_command(body, depth + 1))
+    # A heredoc body is data unless something on the same line runs it: a shell
+    # reading its script from stdin (cat <<EOF | bash) or a SQL client.
+    commands = [unwrap(words) for words in lexed.segments]
+    bases = [_base(words[0]) for words in commands if words]
+    runs_shell = "eval" in bases or any(_base(w[0]) in _SHELLS and _shell_input(w)[1] for w in commands if w)
+    runs_sql = any(base in _SQL_CLIENTS for base in bases)
     for doc in lexed.heredocs:
-        owner = lexed.segments[doc.segment_index] if doc.segment_index < len(lexed.segments) else []
-        owner = unwrap(owner)
-        base = _base(owner[0]) if owner else ""
-        if base in _SHELLS or base == "eval":
+        if runs_shell:
             findings.extend(classify_command(doc.body, depth + 1))
-        elif base in _SQL_CLIENTS:
+        if runs_sql:
             findings.extend(classify_sql_text(doc.body))
     return findings
 

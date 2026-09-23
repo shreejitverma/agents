@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guard  # noqa: E402
 
 GUARD = Path(__file__).resolve().parent / "guard.py"
+SETTINGS = Path(__file__).resolve().parent.parent / "settings.json"
 ATTENDED = {"CLAUDE_CODE_SESSION_ATTENDED": "1"}
 UNATTENDED = {"CLAUDE_CODE_SESSION_ATTENDED": "0"}
 
@@ -78,6 +79,15 @@ BLOCKED = [
     "echo hi # comment\ngit commit --no-verify -m x",
     "bash <<'EOF'\ngit push --force origin main\nEOF",
     'git commit -m "$(date)" --no-verify',
+    # redirections must not hide the next command
+    "ls 2>&1 | git commit --no-verify",
+    # heredoc with an apostrophe inside a command substitution
+    "git commit --no-verify -m \"$(cat <<'EOF'\nfix: don't crash\nEOF\n)\"",
+    # shell options that take a value, and heredocs piped into a shell
+    "bash -o pipefail -c 'rm -rf ~'",
+    "bash -eo pipefail -c 'rm -rf ~'",
+    "cat <<'EOF' | bash\ngit push --force origin main\nEOF",
+    "cat <<'EOF' | sudo bash -s\ngit push --force origin main\nEOF",
 ]
 
 ASKED = [
@@ -116,6 +126,11 @@ ASKED = [
     "psql <<'SQL'\ndrop table x;\nSQL",
     "dd if=/dev/zero of=disk.img bs=1m count=1",
     "for d in a b; do rm -rf $d; done",
+    "exec 3>&- ; rm -rf src",
+    "cmd 2>&- && git reset --hard",
+    "cmd <&- ; git reset --hard",
+    "cmd 3>&1- ; git reset --hard",
+    "cat <<'SQL' | psql\ndrop table x;\nSQL",
 ]
 
 ALLOWED = [
@@ -157,6 +172,9 @@ ALLOWED = [
     'echo "git push --force origin main"',
     "grep -rn 'git commit --no-verify' .",
     "cat <<'EOF' > notes.md\nrm -rf /\ngit push --force origin main\nEOF",
+    "cat <<'EOF' | bash script.sh\ngit push --force origin main\nEOF",
+    "git commit -m \"$(cat <<'EOF'\nfix: don't crash\nEOF\n)\"",
+    'echo "$(cat <<-EOF\n\tit\'s fine\n\tEOF\n)"',
     "python3 - <<'EOF'\nimport os\nos.system('echo')\nEOF",
     "find . -name '*.pyc' -print",
     "psql -c 'select * from trades'",
@@ -208,6 +226,18 @@ class LexerTest(unittest.TestCase):
         lexed = guard.lex("cat <<EOF >x\nbody line\nEOF\nnext")
         self.assertEqual(lexed.segments, [["cat"], ["next"]])
         self.assertEqual(lexed.heredocs[0].body, "body line")
+
+    def test_fd_close_keeps_next_word(self) -> None:
+        self.assertEqual(guard.lex("exec 3>&- ; rm x").segments, [["exec"], ["rm", "x"]])
+        self.assertEqual(guard.lex("a 2>&1 b").segments, [["a", "b"]])
+
+    def test_dangling_redirection_does_not_cross_segments(self) -> None:
+        self.assertEqual(guard.lex("a > ; b c").segments, [["a"], ["b", "c"]])
+
+    def test_heredoc_inside_substitution(self) -> None:
+        lexed = guard.lex("echo \"$(cat <<'EOF'\nit's (\nEOF\n)\" done")
+        self.assertEqual(lexed.segments, [["echo", "$(...)", "done"]])
+        self.assertEqual(lexed.substitutions, ["cat <<'EOF'\nit's (\nEOF\n"])
 
 
 class PresenceTest(unittest.TestCase):
@@ -302,6 +332,50 @@ class ProcessTest(unittest.TestCase):
     def test_usage_error(self) -> None:
         proc = self.run_guard("nope", "{}", ATTENDED)
         self.assertNotEqual(proc.returncode, 0)
+
+
+class SettingsHookTest(unittest.TestCase):
+    """The exact hook commands from settings.json, run through /bin/sh as Claude Code does."""
+
+    def hook_commands(self) -> dict[str, str]:
+        entries = json.loads(SETTINGS.read_text())["hooks"]["PreToolUse"]
+        return {entry["matcher"]: entry["hooks"][0]["command"] for entry in entries}
+
+    def run_hook(self, command: str, home: str, tool_input: dict) -> subprocess.CompletedProcess:
+        env = {k: v for k, v in os.environ.items() if k not in ("FM_TASK_ID", "CLAUDE_GUARD_DISABLE")}
+        env.update(UNATTENDED, HOME=home)
+        return subprocess.run(
+            ["/bin/sh", "-c", command],
+            input=json.dumps({"tool_input": tool_input}),
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=10,
+            check=False,
+        )
+
+    def test_missing_script_allows(self) -> None:
+        commands = self.hook_commands()
+        self.assertEqual(set(commands), {"Bash", "Write|Edit|MultiEdit"})
+        with tempfile.TemporaryDirectory() as home:
+            for command in commands.values():
+                with self.subTest(command=command):
+                    proc = self.run_hook(command, home, {"command": "git push -f origin main"})
+                    self.assertEqual((proc.returncode, proc.stdout), (0, ""))
+
+    def test_installed_script_runs(self) -> None:
+        commands = self.hook_commands()
+        with tempfile.TemporaryDirectory() as home:
+            hooks = Path(home, "github", "agents", "claude", "hooks")
+            hooks.mkdir(parents=True)
+            (hooks / "guard.py").symlink_to(GUARD)
+            config = Path(home, ".clang-tidy")
+            config.write_text("Checks: '*'\n")
+            bash = self.run_hook(commands["Bash"], home, {"command": "git push -f origin main"})
+            edit = self.run_hook(commands["Write|Edit|MultiEdit"], home, {"file_path": str(config)})
+            for proc in (bash, edit):
+                self.assertEqual(proc.returncode, 0)
+                self.assertEqual(json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
 
 
 if __name__ == "__main__":

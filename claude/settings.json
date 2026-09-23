@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/github/agents/claude/hooks/guard.py\" bash",
+            "command": "f=\"$HOME/github/agents/claude/hooks/guard.py\"; [ ! -f \"$f\" ] || exec python3 \"$f\" bash",
             "timeout": 10
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/github/agents/claude/hooks/guard.py\" edit",
+            "command": "f=\"$HOME/github/agents/claude/hooks/guard.py\"; [ ! -f \"$f\" ] || exec python3 \"$f\" edit",
             "timeout": 10
           }
         ]
