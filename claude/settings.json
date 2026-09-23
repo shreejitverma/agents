@@ -44,6 +44,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$HOME/github/agents/claude/hooks/post_edit.py\"; [ ! -f \"$f\" ] || exec python3 \"$f\"",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }

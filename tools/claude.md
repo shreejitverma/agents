@@ -23,7 +23,7 @@ Claude is the only tool here with more than one reasoning class, so pick deliber
 IC skills load from `~/.claude/skills`, mirrored from `~/.agents/skills` by `ic-link`.
 This manual is generated; `~/.claude/CLAUDE.md` is a link to the generated build and must never be hand-edited.
 
-### Subagents, rules, and the guard hook
+### Subagents, rules, and hooks
 These live in this repo under `claude/` and `ic-link` links them into `~/.claude`.
 - Subagents give a fresh-context second opinion before the gate: `cpp-reviewer` and `python-reviewer` for a nontrivial C++ or Python diff, `silent-failure-hunter` for code that moves data, money, orders, or state, `pr-test-analyzer` for whether the tests prove the change, `type-design-analyzer` for new domain types, and `cpp-build-resolver` for a failing C++ build.
   All but `cpp-build-resolver` are read-only; their findings feed the `no-mistakes` gate and never replace it.
@@ -33,3 +33,5 @@ These live in this repo under `claude/` and `ic-link` links them into `~/.claude
   It always denies skipping git hooks (`--no-verify`, a `core.hooksPath` override), force-pushing or deleting a shared branch, and recursive removal of a critical path.
   It asks before other destructive commands (`reset --hard`, `clean -f`, `rm -rf` outside build artifacts and temp directories, `branch -D`, destructive SQL) and before editing an existing lint, format, or gate config, but only when a human is present; unattended runs (`claude -p`, firstmate crewmates) are allowed the destructive commands and denied the config edits.
   When the guard refuses something that is genuinely intended, ask the user to run it with the `!` prefix; never work around it with another command.
+- `claude/hooks/post_edit.py` runs after every edit and reports the file's problems back to you: `ruff check` and `ruff format --check` for Python when the project configures ruff, `clang-format --dry-run` for C and C++ when it has a `.clang-format`.
+  It runs only what the project itself configures, stays silent on a clean file, and never blocks; fix what it reports before moving on rather than leaving it for the `no-mistakes` gate.

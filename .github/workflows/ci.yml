@@ -31,21 +31,22 @@ jobs:
       - name: Verify every manual matches its sources
         run: bin/build-manuals --check
 
-  guard-hook:
-    name: Guard hook tests and lint
+  hooks:
+    name: Hook tests and lint
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
-      # claude/settings.json runs claude/hooks/guard.py on every Bash and edit
-      # call, so a regression there either blocks work or lets a destructive
-      # command through. The suite drives the real script, including as a
-      # subprocess the way Claude Code invokes it.
-      - name: Run the guard hook tests
+      # claude/settings.json runs claude/hooks/guard.py before every Bash and
+      # edit call and post_edit.py after every edit, so a regression either
+      # blocks work, lets a destructive command through, or feeds the model
+      # wrong lint findings. The suites drive the real scripts, including as a
+      # subprocess the way Claude Code invokes them.
+      - name: Run the hook tests
         run: python3 -m unittest discover -s claude/hooks -v
 
-      - name: Lint and format-check the hook
+      - name: Lint and format-check the hooks
         run: |
           pipx run ruff==0.16.1 check claude/hooks
           pipx run ruff==0.16.1 format --check claude/hooks
