@@ -44,6 +44,8 @@ no-mistakes:
 Verify with `grok inspect`: this file must appear as a loaded instruction.
 
 Grok owns `~/.grok/config.toml` and rewrites it on start, so `ic-link` deliberately does not link it and this repo does not version a copy of it.
+Its `[models]` table pins `default = "grok-4.7"` and `default_reasoning_effort = "high"`, with `fork_secondary_model = "grok-4.7"` under `[ui]`.
+The same model and effort are pinned for the gate in `~/.no-mistakes/config.yaml` (`agent_config.grok`) and for crewmates in firstmate's `config/crew-dispatch.json`; bump all three together on a Grok release.
 
 Measured on 1.0.34: the 10,000-character per-file cap in Grok's own README is not enforced.
 A 16,693-character manual loaded whole, which `grok inspect` confirmed by reporting it at 4.00 characters per token.
