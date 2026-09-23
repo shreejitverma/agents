@@ -36,6 +36,11 @@ if grep -q FMT "$f"; then
 fi
 exit 0
 """
+CLANG_FORMAT_BAD_CONFIG_STUB = """#!/bin/sh
+echo "YAML:3:1: error: unknown key 'InsertNewlineAtEOF'" >&2
+echo "Error reading $PWD/.clang-format: Invalid argument" >&2
+exit 1
+"""
 SLEEP_STUB = "#!/bin/sh\nsleep 30\n"
 LONG_RUFF_STUB = """#!/bin/sh
 [ "$1" = check ] || exit 0
@@ -129,6 +134,11 @@ class PostEditTest(unittest.TestCase):
         self.stub("clang-format", CLANG_FORMAT_STUB)
         self.assertEqual(self.fb(self.write("a.hpp", "FMT\n")), "")
 
+    def test_cpp_unreadable_clang_format_config_is_silent(self) -> None:
+        self.stub("clang-format", CLANG_FORMAT_BAD_CONFIG_STUB)
+        self.write(".clang-format", "InsertNewlineAtEOF: true\n")
+        self.assertEqual(self.fb(self.write("src/a.cpp", "int  FMT;\n")), "")
+
     def test_cpp_timeout_is_silent(self) -> None:
         self.stub("clang-format", SLEEP_STUB)
         self.write(".clang-format", "")
@@ -191,12 +201,56 @@ class PostEditTest(unittest.TestCase):
         self.assertEqual(self.fb(self.write("b.py", "x = 1\n")), "")
 
 
-class SettingsTest(unittest.TestCase):
-    def test_registered_as_post_tool_use_on_edits(self) -> None:
-        settings = json.loads(SETTINGS.read_text())
-        entries = settings["hooks"]["PostToolUse"]
-        commands = [h["command"] for e in entries if e["matcher"] == "Write|Edit|MultiEdit" for h in e["hooks"]]
-        self.assertTrue(any("claude/hooks/post_edit.py" in c for c in commands), commands)
+class SettingsHookTest(unittest.TestCase):
+    """The exact PostToolUse command from settings.json, run through /bin/sh as Claude Code does."""
+
+    def hook_command(self) -> str:
+        entries = json.loads(SETTINGS.read_text())["hooks"]["PostToolUse"]
+        self.assertEqual([e["matcher"] for e in entries], ["Write|Edit|MultiEdit"])
+        return entries[0]["hooks"][0]["command"]
+
+    def run_hook(self, home: Path, bin_dir: Path, file_path: Path) -> subprocess.CompletedProcess[str]:
+        env = {k: v for k, v in os.environ.items() if k != "CLAUDE_POST_EDIT_DISABLE"}
+        env.update(
+            HOME=str(home), PATH=os.pathsep.join([str(bin_dir), str(Path(sys.executable).parent), "/usr/bin", "/bin"])
+        )
+        return subprocess.run(
+            ["/bin/sh", "-c", self.hook_command()],
+            input=json.dumps({"tool_name": "Edit", "tool_input": {"file_path": str(file_path)}}),
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=30,
+            check=False,
+        )
+
+    def setUp(self) -> None:
+        self.home = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.home)
+        self.bin = self.home / "bin"
+        self.bin.mkdir()
+        (self.bin / "python3").symlink_to(sys.executable)
+        ruff = self.bin / "ruff"
+        ruff.write_text(RUFF_STUB)
+        ruff.chmod(0o755)
+        repo = self.home / "repo"
+        (repo / ".git").mkdir(parents=True)
+        (repo / "ruff.toml").write_text("")
+        self.dirty = repo / "a.py"
+        self.dirty.write_text("LINT\n")
+
+    def test_missing_script_is_silent(self) -> None:
+        proc = self.run_hook(self.home, self.bin, self.dirty)
+        self.assertEqual((proc.returncode, proc.stdout, proc.stderr), (0, "", ""))
+
+    def test_installed_script_reports_findings(self) -> None:
+        hooks = self.home / "github" / "agents" / "claude" / "hooks"
+        hooks.mkdir(parents=True)
+        (hooks / "post_edit.py").symlink_to(HOOK)
+        proc = self.run_hook(self.home, self.bin, self.dirty)
+        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(proc.stdout, "")
+        self.assertIn("F401", proc.stderr)
 
 
 if __name__ == "__main__":

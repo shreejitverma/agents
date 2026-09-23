@@ -106,13 +106,16 @@ def check_cpp(path: Path) -> list[str]:
     if root is None:
         return []
     fmt = run(["clang-format", "--dry-run", "--Werror", "--style=file", str(path)], root)
-    if fmt is None or fmt.returncode == 0:
+    if fmt is None:
         return []
     # Each violation is three lines of source excerpt, and the fix is one
-    # command either way, so report the count rather than the excerpts.
+    # command either way, so report the count rather than the excerpts. Any
+    # other failure, such as an unreadable .clang-format, is not a finding.
     places = fmt.stderr.count("[-Wclang-format-violations]")
-    where = f" in {places} place{'s' if places != 1 else ''}" if places else ""
-    return [f"clang-format would reformat this file{where}; run: clang-format -i {path}"]
+    if places == 0:
+        return []
+    plural = "s" if places != 1 else ""
+    return [f"clang-format would reformat this file in {places} place{plural}; run: clang-format -i {path}"]
 
 
 def feedback(payload: Mapping[str, object], env: Mapping[str, str]) -> str:
