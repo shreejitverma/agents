@@ -88,6 +88,10 @@ BLOCKED = [
     "bash -eo pipefail -c 'rm -rf ~'",
     "cat <<'EOF' | bash\ngit push --force origin main\nEOF",
     "cat <<'EOF' | sudo bash -s\ngit push --force origin main\nEOF",
+    # empty words and arithmetic shifts inside multi-line substitutions
+    "bash '' ; git commit --no-verify -m x",
+    'bash "" -c x; git push --force origin main',
+    "x=$(\necho $((1<<3))\n) ; git commit --no-verify",
 ]
 
 ASKED = [
@@ -208,6 +212,57 @@ class ClassifierTest(unittest.TestCase):
 
     def test_unterminated_quote_fails_open(self) -> None:
         self.assertIsNone(guard.decide_bash("echo 'unterminated", present=True))
+        self.assertIsNone(guard.decide_bash("git reset --hard; echo 'unterminated", present=True))
+
+
+class UnparsedFallbackTest(unittest.TestCase):
+    DENIED = [
+        "bash '' ; git commit --no-verify -m x",
+        "echo 'unterminated ; git push --force origin main",
+        'git commit -nm "unterminated',
+        "git -c core.hooksPath=/dev/null commit -m 'x",
+        'echo "$(git push origin +main',
+        "echo 'x' && git push --mirror origin 'y",
+        "git push origin --delete master 'y",
+        "echo 'x; rm -rf ~",
+        "echo 'x; sudo rm -fr /usr",
+    ]
+    ALLOWED = [
+        "echo 'unterminated",
+        "echo 'x; git push --force origin feat",
+        "echo 'x; rm -rf src",
+        "echo 'x; git reset --hard",
+        "git commit -m 'unterminated",
+    ]
+
+    def test_markers(self) -> None:
+        for command in self.DENIED:
+            with self.subTest(command=command):
+                finding = guard.unparsed_block_finding(command)
+                self.assertIsNotNone(finding)
+                self.assertEqual(finding.level, guard.BLOCK)
+
+    def test_no_marker(self) -> None:
+        for command in self.ALLOWED:
+            with self.subTest(command=command):
+                self.assertIsNone(guard.unparsed_block_finding(command))
+
+    def test_decide_bash_denies_unparseable_marker(self) -> None:
+        for present in (True, False):
+            for command in self.DENIED:
+                with self.subTest(command=command, present=present):
+                    d = guard.decide_bash(command, present)["hookSpecificOutput"]
+                    self.assertEqual(d["permissionDecision"], "deny")
+
+    def test_unparseable_reason(self) -> None:
+        d = guard.decide_bash("echo 'unterminated ; git push --force origin main", True)["hookSpecificOutput"]
+        self.assertIn("could not be parsed", d["permissionDecisionReason"])
+        self.assertIn("main", d["permissionDecisionReason"])
+
+    def test_decide_bash_allows_unparseable_without_marker(self) -> None:
+        for command in self.ALLOWED:
+            with self.subTest(command=command):
+                self.assertIsNone(guard.decide_bash(command, present=True))
 
 
 class LexerTest(unittest.TestCase):

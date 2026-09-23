@@ -23,8 +23,10 @@ FM_TASK_ID is unset (firstmate exports it into every ship and scout pane).
 
 This is a backstop against accidents, not a sandbox: a determined caller can
 always reach the same effect some other way (a script file, python -c, ...).
-Parse failures and internal errors fail open with a note on stderr, so a guard
-bug never blocks work; the user can always run a refused command with the `!`
+When the command cannot be parsed, a crude split on separators is run through
+the same classifiers and only an always-deny marker still blocks; anything else,
+and every internal error, fails open with a note on stderr, so a guard bug never
+blocks ordinary work. The user can always run a refused command with the `!`
 prefix, which bypasses tool hooks.
 
 Adapted from ECC (https://github.com/affaan-m/ecc, MIT License, Copyright (c)
@@ -147,6 +149,12 @@ def _match_close(text: str, start: int, open_ch: str, close_ch: str, code: bool 
         c = text[i]
         if c == "\\":
             i += 2
+            continue
+        if code and text.startswith("$((", i):
+            j = _match_close(text, i + 3, "(", ")")
+            if j == -1:
+                return -1
+            i = j + 2 if j + 1 < n and text[j + 1] == ")" else j + 1
             continue
         if code and text.startswith("<<", i) and not text.startswith("<<<", i):
             delimiter, strip_tabs, i = _read_heredoc_delimiter(text, i)
@@ -560,7 +568,7 @@ def _shell_input(words: list[str]) -> tuple[str | None, bool]:
         if w.startswith("--"):
             i += 1
             continue
-        if w[0] in "-+" and len(w) > 1:
+        if w[:1] in ("-", "+") and len(w) > 1:
             flags = w[1:]
             if w[0] == "-" and "c" in flags:
                 return (words[i + 1] if i + 1 < len(words) else None), False
@@ -1107,11 +1115,33 @@ def decision(level: str, reason: str) -> dict:
     }
 
 
+_FALLBACK_SEPARATORS = re.compile(r"\$\(|[\n;&|()`]")
+
+
+def unparsed_block_finding(command: str) -> Finding | None:
+    """Always-deny marker in a command the lexer could not parse, from a crude split on separators."""
+    findings: list[Finding] = []
+    for chunk in _FALLBACK_SEPARATORS.split(command):
+        tokens = [t.strip("'\"") for t in chunk.split()]
+        tokens = [t for t in tokens if t]
+        for i, token in enumerate(tokens):
+            base = _base(token)
+            if base == "git":
+                findings.extend(classify_git(tokens[i:]))
+            elif base == "rm":
+                findings.extend(classify_rm(tokens[i:]))
+    return next((f for f in findings if f.level == BLOCK), None)
+
+
 def decide_bash(command: str, present: bool) -> dict | None:
     try:
         finding = worst(classify_command(command))
-    except ValueError:
-        return None  # unparseable (an unterminated quote fails in bash too)
+    except Exception as exc:
+        marker = unparsed_block_finding(command)
+        if marker is None:
+            print(f"guard: could not parse the command, allowing: {exc!r}", file=sys.stderr)
+            return None
+        finding = Finding(BLOCK, f"the command could not be parsed and contains {marker.reason}")
     if finding is None:
         return None
     if finding.level == BLOCK:
