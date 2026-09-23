@@ -211,7 +211,7 @@ Claude is the only tool here with more than one reasoning class, so pick deliber
 - `haiku` is for mechanical work only.
 - Effort runs `low`, `medium`, `high`, `xhigh`, `max`.
   Use `high` as the floor for anything intelligence-sensitive and `xhigh` for long-horizon agentic work; reserve `max` for correctness-over-cost cases.
-  Opus 5.5 ships defaulting to `medium` and ignores the legacy top-level `effortLevel`, so `claude/settings.json` sets its default to `high` through `modelSettings`; `/effort` with Enter overwrites that entry.
+  Opus 5.5 ships defaulting to `medium`, and a top-level `effortLevel` in the user settings file (`~/.claude/settings.json`, this repo's `claude/settings.json`) does not apply to it, so that file sets its default to `high` through `modelSettings.claude-opus-5-5.effortLevel`, which takes precedence over any top-level key; `/effort` with Enter overwrites that entry.
 
 ### Skills and wiring
 IC skills load from `~/.claude/skills`, mirrored from `~/.agents/skills` by `ic-link`.
