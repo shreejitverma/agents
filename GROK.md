@@ -186,6 +186,9 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - `gh-axi`: GitHub operations (issues, PRs, CI runs, releases) in agent-ergonomic form.
 - `chrome-devtools-axi`: real-browser verification for anything with a web surface.
 - `lavish-axi`: render plans, reviews, and comparisons as rich artifacts when visual beats prose.
+- `archify` skill: validated, browser-checked interactive HTML diagrams (architecture, workflow, sequence, data flow, state, ERD, class, tree, timeline, waterfall) from a description, Mermaid, or a traced repository; use it when the answer is a diagram, and `lavish-axi` when the user must review or annotate the result.
+  `[archify explainer: on-demand]` Build an archify explainer page only when the user asks for one, and never append an explainer-mode line to a generated manual; to change the mode, edit this line in `~/github/agents/ROUTING.md` and rebuild.
+  It updates only through the fleet fork sync, never `npx skills add` or `update`.
 - `no-mistakes`: the ship gate and the only way to ship; every change reaches the remote through it (review, tests, lint, docs, push, PR, CI), never via bare `git push`.
 - `stow` skill: sweep durable knowledge to disk before ending a long session.
 - `ic-doctor`: run when the toolchain itself misbehaves; each FAIL line names its fix.
