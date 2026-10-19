@@ -11,7 +11,7 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
   Tier 1, frontier reasoning (architecture, risky or wide refactors, concurrency and lifetime work, root-cause debugging, security-sensitive or measured performance work, ambiguous multi-file tasks): Claude Fable at high effort, and nothing else while Claude has runway; Fable's separate weekly window is spent only here.
   Tier 2, standard well-specified coding (scoped features, known-cause fixes, tests, contained refactors, normal reviews): Claude Opus 5.5 at 1M context (`claude-opus-5-5[1m]`) and Grok 4.7 (`grok-4.7`), both at high effort, and Gemini 3.1 Pro.
   Opus is the strongest of the three rather than a true peer, so a quota win for Grok or Gemini here trades some quality for subscription utilization, which is sound only because the spec is already clear and `no-mistakes` gates the result.
-  Tier 3, mechanical work (renames, lint and format sweeps, typo fixes, bumps, boilerplate): Claude Haiku, Grok 4.5, and Gemini Flash are peers.
+  Tier 3, mechanical work (renames, lint and format sweeps, typo fixes, bumps, boilerplate): Claude Haiku, Grok 4.7 at high effort, and Gemini Flash are peers.
   Live or post-cutoff information and X research go to Grok first, then Gemini.
   Multimodal evidence, one-pass ingestion of a very large corpus, and investigations of Google's own platforms go to Gemini first, then Claude Opus 5.5 at 1M context.
   Step 2, read `quota-axi` and pick within the class: drop any candidate whose runway is `exhausted_now` or projected to exhaust before the task would finish, then among the surviving peers take the highest `spendPriority`, so the subscription with the most use-it-or-lose-it headroom before its reset gets the work.
