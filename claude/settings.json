@@ -1,24 +1,5 @@
 {
   "model": "claude-opus-5-5[1m]",
-  "modelSettings": {
-    "claude-opus-5-5": {
-      "effortLevel": "high"
-    }
-  },
-  "enabledPlugins": {
-    "vercel@claude-plugins-official": true,
-    "compact-adviser@compact-adviser": true
-  },
-  "extraKnownMarketplaces": {
-    "compact-adviser": {
-      "source": {
-        "source": "directory",
-        "path": "/Users/shreejitverma/github/compact-adviser"
-      }
-    }
-  },
-  "skipDangerousModePermissionPrompt": true,
-  "theme": "dark",
   "env": {
     "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1"
   },
@@ -57,5 +38,26 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": true,
+    "compact-adviser@compact-adviser": true,
+    "telegram@claude-plugins-official": false
+  },
+  "extraKnownMarketplaces": {
+    "compact-adviser": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/shreejitverma/github/compact-adviser"
+      }
+    }
+  },
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "switchModelsOnFlag": true
 }
