@@ -950,11 +950,63 @@ def classify_find(words: list[str], depth: int) -> list[Finding]:
     return findings
 
 
+# x-axi is the only agent route to the X API because it holds the human approval
+# gate. xurl's token in ~/.xurl can post as the user, so raw xurl and reads of that
+# directory are denied. A person can still run them with the ! prefix.
+_XURL_SAFE = (("version",), ("help",), ("auth", "status"))
+_FILE_READERS = frozenset(
+    [
+        "cat",
+        "less",
+        "more",
+        "head",
+        "tail",
+        "grep",
+        "egrep",
+        "fgrep",
+        "rg",
+        "cp",
+        "mv",
+        "scp",
+        "rsync",
+        "tar",
+        "zip",
+        "base64",
+        "xxd",
+        "od",
+        "strings",
+        "sed",
+        "awk",
+        "curl",
+    ]
+)
+
+
+def classify_x_credentials(base: str, words: list[str]) -> list[Finding]:
+    args = words[1:]
+    if base == "npx" and any("xdevplatform/xurl" in w for w in args):
+        return [Finding(BLOCK, "raw xurl bypasses the x-axi approval gate; use x-axi")]
+    if base == "xurl":
+        if args and (
+            args[0] in ("--help", "-h", "--version", "-v")
+            or tuple(args[:2]) in _XURL_SAFE
+            or tuple(args[:1]) in _XURL_SAFE
+        ):
+            return []
+        return [Finding(BLOCK, "raw xurl bypasses the x-axi approval gate; use x-axi")]
+    if base in _FILE_READERS and any(".xurl" in w for w in args):
+        return [Finding(BLOCK, "~/.xurl holds the X login; agents must not read it")]
+    return []
+
+
 def classify_words(words: list[str], depth: int = 0) -> list[Finding]:
     words = unwrap(words)
     if not words or depth > MAX_DEPTH:
         return []
     base = _base(words[0])
+    x_findings = classify_x_credentials(base, words)
+    if x_findings:
+        return x_findings
     if base in _SHELLS:
         script, _ = _shell_input(words)
         return classify_command(script, depth + 1) if script else []

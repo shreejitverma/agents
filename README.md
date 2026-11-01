@@ -53,7 +53,7 @@ Other versioned files:
 | `grok/agents/` | `~/.grok/agents/` | Grok user agent definitions (`implementer`, `reviewer`) |
 | `claude/agents/` | `~/.claude/agents/` (one link per file) | Claude subagents: `cpp-reviewer`, `python-reviewer`, `silent-failure-hunter`, `pr-test-analyzer`, `type-design-analyzer`, `cpp-build-resolver` |
 | `claude/rules/` | `~/.claude/rules/` (one link per file) | Path-scoped Claude rules for C++ and Python files |
-| `claude/hooks/guard.py` | run from `claude/settings.json` | PreToolUse guard for destructive shell commands and check-config edits; tests in `claude/hooks/test_guard.py` |
+| `claude/hooks/guard.py` | run from `claude/settings.json` | PreToolUse guard for destructive shell commands, check-config edits, and agent access to raw `xurl` or `~/.xurl`; tests in `claude/hooks/test_guard.py` |
 | `claude/hooks/post_edit.py` | run from `claude/settings.json` | PostToolUse lint feedback (ruff, clang-format) using only the edited project's own config; tests in `claude/hooks/test_post_edit.py` |
 | `ruff.toml` | none | Lint and format settings for the Python under `claude/hooks` |
 | `OPINIONS.md` | `~/OPINIONS.md` | Personal engineering viewpoints agents read on demand |

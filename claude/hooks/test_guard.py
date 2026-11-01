@@ -26,6 +26,17 @@ def level(command: str) -> str | None:
 
 
 BLOCKED = [
+    # X credentials and the x-axi approval gate
+    "xurl token",
+    "TOKEN=$(xurl token) && curl -H 'x' https://api.x.com/2/users/me",
+    "xurl -X POST /2/tweets -d '{}'",
+    "xurl /2/users/me",
+    "xurl chat send @bob hi",
+    "xurl auth oauth2",
+    "npx -y @xdevplatform/xurl mcp",
+    "sh -c 'xurl token'",
+    "cat ~/.xurl/auth.yml",
+    "cp ~/.xurl/auth.yml /tmp/a",
     # git hook bypass
     "git commit --no-verify -m 'x'",
     "git commit -m 'x' --no-verify",
@@ -138,6 +149,13 @@ ASKED = [
 ]
 
 ALLOWED = [
+    "x-axi post 'hello'",
+    "x-axi mentions",
+    "xurl version",
+    "xurl --help",
+    "xurl auth status",
+    "git commit -m 'document ~/.xurl and xurl token'",
+    "grep -rn xurl README.md",
     "git status",
     "git commit -m 'fix -n handling'",
     "git commit -m 'mention --no-verify in docs'",
