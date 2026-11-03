@@ -59,5 +59,10 @@
   },
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
-  "switchModelsOnFlag": true
+  "switchModelsOnFlag": true,
+  "permissions": {
+    "deny": [
+      "Read(~/.xurl/**)"
+    ]
+  }
 }

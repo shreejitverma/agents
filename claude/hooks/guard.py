@@ -9,7 +9,8 @@ Registered in claude/settings.json:
 Decisions, printed as PreToolUse JSON on stdout (exit 0 in every case):
 
     block  always deny: bypassing git hooks, force-pushing or deleting a shared
-           branch, recursive force-removal of a critical path.
+           branch, recursive force-removal of a critical path, and agent access
+           to X credentials (the x-axi keystore item, raw xurl, ~/.xurl).
     ask    destructive but sometimes intended (reset --hard, clean -f, rm -rf of a
            non-artifact path, branch -D, DROP TABLE, ...). Asks when a human is at
            the keyboard; allowed silently in unattended runs so claude -p pipelines
@@ -950,11 +951,131 @@ def classify_find(words: list[str], depth: int) -> list[Finding]:
     return findings
 
 
+# x-axi is the only agent route to the X API because it holds the human approval
+# gate. Its login lives in the OS keystore (service "x-axi"), so agent reads,
+# dumps, and deletions of that item are denied. Versions before native login used
+# xurl, whose plain-text token in ~/.xurl can post as the user, so raw xurl and
+# reads of that directory stay denied. A person can still run any of these with
+# the ! prefix. This is a tripwire for agent commands, not a sandbox: code that
+# shells out on its own is not inspected.
+_XURL_SAFE = (("version",), ("help",), ("auth", "status"))
+_FILE_READERS = frozenset(
+    [
+        "cat",
+        "less",
+        "more",
+        "head",
+        "tail",
+        "grep",
+        "egrep",
+        "fgrep",
+        "rg",
+        "cp",
+        "mv",
+        "scp",
+        "rsync",
+        "tar",
+        "zip",
+        "base64",
+        "xxd",
+        "od",
+        "strings",
+        "sed",
+        "awk",
+        "curl",
+    ]
+)
+
+
+def classify_x_credentials(base: str, words: list[str]) -> list[Finding]:
+    args = words[1:]
+    if base == "npx" and any("xdevplatform/xurl" in w for w in args):
+        return [Finding(BLOCK, "raw xurl bypasses the x-axi approval gate; use x-axi")]
+    if base == "xurl":
+        if args and (
+            args[0] in ("--help", "-h", "--version") or tuple(args[:2]) in _XURL_SAFE or tuple(args[:1]) in _XURL_SAFE
+        ):
+            return []
+        return [Finding(BLOCK, "raw xurl bypasses the x-axi approval gate; use x-axi")]
+    if base in _FILE_READERS and any(".xurl" in w for w in args):
+        return [Finding(BLOCK, "~/.xurl holds the X login; agents must not read it")]
+    if base == "security":
+        return _classify_security(args)
+    if base == "secret-tool" and args and args[0] in _SECRET_TOOL_ITEM_OPS and _secret_tool_names_x_axi(args[1:]):
+        return [Finding(BLOCK, _KEYSTORE_REASON)]
+    return []
+
+
+_KEYSTORE_REASON = "the OS keystore item 'x-axi' holds the X login; agents must not read or delete it"
+# security(1) subcommands that print or remove a stored secret.
+_SECURITY_ITEM_OPS = frozenset(
+    [
+        "find-generic-password",
+        "find-internet-password",
+        "delete-generic-password",
+        "delete-internet-password",
+    ]
+)
+_SECRET_TOOL_ITEM_OPS = frozenset(["lookup", "search", "clear"])
+
+
+# x-axi stores its login with account "oauth2", so an account selector with no other
+# service picks out the same item.
+def _is_x_axi_item(service: str | None, account: str | None) -> bool:
+    return service == "x-axi" or (service is None and account == "oauth2")
+
+
+_SECURITY_SELECTOR = re.compile(r"-[gw]*([as])(.*)")
+
+
+def _security_names_x_axi(args: list[str]) -> bool:
+    if "x-axi" in args:
+        return True
+    selectors: dict[str, str] = {}
+    for i, a in enumerate(args):
+        m = _SECURITY_SELECTOR.fullmatch(a)
+        if m:
+            value = m.group(2) or (args[i + 1] if i + 1 < len(args) else "")
+            selectors[m.group(1)] = value
+    return _is_x_axi_item(selectors.get("s"), selectors.get("a"))
+
+
+def _secret_tool_names_x_axi(args: list[str]) -> bool:
+    if "x-axi" in args:
+        return True
+    attrs = [a for a in args if not a.startswith("--")]
+    pairs = dict(zip(attrs[::2], attrs[1::2], strict=False))
+    return _is_x_axi_item(pairs.get("service"), pairs.get("account"))
+
+
+def _classify_security(args: list[str]) -> list[Finding]:
+    # Skip global options such as -q or -v to reach the subcommand.
+    i = 0
+    while i < len(args) and args[i].startswith("-"):
+        if not args[i].startswith("--") and "p" in args[i]:
+            # -p prompt implies interactive mode, which reads subcommands from stdin.
+            break
+        i += 1
+    if i >= len(args) or args[i].startswith("-"):
+        # Interactive mode reads subcommands from stdin, where they cannot be checked.
+        return [Finding(BLOCK, "interactive security(1) hides its subcommands from the guard; " + _KEYSTORE_REASON)]
+    sub, rest = args[i], args[i + 1 :]
+    if sub in _SECURITY_ITEM_OPS and _security_names_x_axi(rest):
+        return [Finding(BLOCK, _KEYSTORE_REASON)]
+    decrypts = any(a.startswith("-") and not a.startswith("--") and "d" in a for a in rest)
+    if sub == "dump-keychain" and decrypts:
+        return [Finding(BLOCK, "decrypting a keychain dump exposes every stored secret, including the X login")]
+    return []
+
+
 def classify_words(words: list[str], depth: int = 0) -> list[Finding]:
     words = unwrap(words)
     if not words or depth > MAX_DEPTH:
         return []
     base = _base(words[0])
+    x_findings = classify_x_credentials(base, words)
+    if x_findings:
+        return x_findings
     if base in _SHELLS:
         script, _ = _shell_input(words)
         return classify_command(script, depth + 1) if script else []
