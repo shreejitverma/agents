@@ -992,9 +992,7 @@ def classify_x_credentials(base: str, words: list[str]) -> list[Finding]:
         return [Finding(BLOCK, "raw xurl bypasses the x-axi approval gate; use x-axi")]
     if base == "xurl":
         if args and (
-            args[0] in ("--help", "-h", "--version", "-v")
-            or tuple(args[:2]) in _XURL_SAFE
-            or tuple(args[:1]) in _XURL_SAFE
+            args[0] in ("--help", "-h", "--version") or tuple(args[:2]) in _XURL_SAFE or tuple(args[:1]) in _XURL_SAFE
         ):
             return []
         return [Finding(BLOCK, "raw xurl bypasses the x-axi approval gate; use x-axi")]
@@ -1002,7 +1000,7 @@ def classify_x_credentials(base: str, words: list[str]) -> list[Finding]:
         return [Finding(BLOCK, "~/.xurl holds the X login; agents must not read it")]
     if base == "security":
         return _classify_security(args)
-    if base == "secret-tool" and args and args[0] in _SECRET_TOOL_ITEM_OPS and _names_x_axi(args[1:]):
+    if base == "secret-tool" and args and args[0] in _SECRET_TOOL_ITEM_OPS and _secret_tool_names_x_axi(args[1:]):
         return [Finding(BLOCK, _KEYSTORE_REASON)]
     return []
 
@@ -1020,20 +1018,48 @@ _SECURITY_ITEM_OPS = frozenset(
 _SECRET_TOOL_ITEM_OPS = frozenset(["lookup", "search", "clear"])
 
 
-def _names_x_axi(args: list[str]) -> bool:
-    return "x-axi" in args or any(a in ("-sx-axi", "--service=x-axi") for a in args)
+# x-axi stores its login with account "oauth2", so an account selector with no other
+# service picks out the same item.
+def _is_x_axi_item(service: str | None, account: str | None) -> bool:
+    return service == "x-axi" or (service is None and account == "oauth2")
+
+
+_SECURITY_SELECTOR = re.compile(r"-[gw]*([as])(.*)")
+
+
+def _security_names_x_axi(args: list[str]) -> bool:
+    if "x-axi" in args:
+        return True
+    selectors: dict[str, str] = {}
+    for i, a in enumerate(args):
+        m = _SECURITY_SELECTOR.fullmatch(a)
+        if m:
+            value = m.group(2) or (args[i + 1] if i + 1 < len(args) else "")
+            selectors[m.group(1)] = value
+    return _is_x_axi_item(selectors.get("s"), selectors.get("a"))
+
+
+def _secret_tool_names_x_axi(args: list[str]) -> bool:
+    if "x-axi" in args:
+        return True
+    attrs = [a for a in args if not a.startswith("--")]
+    pairs = dict(zip(attrs[::2], attrs[1::2], strict=False))
+    return _is_x_axi_item(pairs.get("service"), pairs.get("account"))
 
 
 def _classify_security(args: list[str]) -> list[Finding]:
     # Skip global options such as -q or -v to reach the subcommand.
     i = 0
-    while i < len(args) and args[i].startswith("-") and args[i] != "-i":
+    while i < len(args) and args[i].startswith("-"):
+        if not args[i].startswith("--") and "p" in args[i]:
+            # -p prompt implies interactive mode, which reads subcommands from stdin.
+            break
         i += 1
-    if i >= len(args) or args[i] == "-i":
+    if i >= len(args) or args[i].startswith("-"):
         # Interactive mode reads subcommands from stdin, where they cannot be checked.
         return [Finding(BLOCK, "interactive security(1) hides its subcommands from the guard; " + _KEYSTORE_REASON)]
     sub, rest = args[i], args[i + 1 :]
-    if sub in _SECURITY_ITEM_OPS and _names_x_axi(rest):
+    if sub in _SECURITY_ITEM_OPS and _security_names_x_axi(rest):
         return [Finding(BLOCK, _KEYSTORE_REASON)]
     decrypts = any(a.startswith("-") and not a.startswith("--") and "d" in a for a in rest)
     if sub == "dump-keychain" and decrypts:
