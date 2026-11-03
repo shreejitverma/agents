@@ -951,8 +951,12 @@ def classify_find(words: list[str], depth: int) -> list[Finding]:
 
 
 # x-axi is the only agent route to the X API because it holds the human approval
-# gate. xurl's token in ~/.xurl can post as the user, so raw xurl and reads of that
-# directory are denied. A person can still run them with the ! prefix.
+# gate. Its login lives in the OS keystore (service "x-axi"), so agent reads,
+# dumps, and deletions of that item are denied. Versions before native login used
+# xurl, whose plain-text token in ~/.xurl can post as the user, so raw xurl and
+# reads of that directory stay denied. A person can still run any of these with
+# the ! prefix. This is a tripwire for agent commands, not a sandbox: code that
+# shells out on its own is not inspected.
 _XURL_SAFE = (("version",), ("help",), ("auth", "status"))
 _FILE_READERS = frozenset(
     [
@@ -996,6 +1000,44 @@ def classify_x_credentials(base: str, words: list[str]) -> list[Finding]:
         return [Finding(BLOCK, "raw xurl bypasses the x-axi approval gate; use x-axi")]
     if base in _FILE_READERS and any(".xurl" in w for w in args):
         return [Finding(BLOCK, "~/.xurl holds the X login; agents must not read it")]
+    if base == "security":
+        return _classify_security(args)
+    if base == "secret-tool" and args and args[0] in _SECRET_TOOL_ITEM_OPS and _names_x_axi(args[1:]):
+        return [Finding(BLOCK, _KEYSTORE_REASON)]
+    return []
+
+
+_KEYSTORE_REASON = "the OS keystore item 'x-axi' holds the X login; agents must not read or delete it"
+# security(1) subcommands that print or remove a stored secret.
+_SECURITY_ITEM_OPS = frozenset(
+    [
+        "find-generic-password",
+        "find-internet-password",
+        "delete-generic-password",
+        "delete-internet-password",
+    ]
+)
+_SECRET_TOOL_ITEM_OPS = frozenset(["lookup", "search", "clear"])
+
+
+def _names_x_axi(args: list[str]) -> bool:
+    return "x-axi" in args or any(a in ("-sx-axi", "--service=x-axi") for a in args)
+
+
+def _classify_security(args: list[str]) -> list[Finding]:
+    # Skip global options such as -q or -v to reach the subcommand.
+    i = 0
+    while i < len(args) and args[i].startswith("-") and args[i] != "-i":
+        i += 1
+    if i >= len(args) or args[i] == "-i":
+        # Interactive mode reads subcommands from stdin, where they cannot be checked.
+        return [Finding(BLOCK, "interactive security(1) hides its subcommands from the guard; " + _KEYSTORE_REASON)]
+    sub, rest = args[i], args[i + 1 :]
+    if sub in _SECURITY_ITEM_OPS and _names_x_axi(rest):
+        return [Finding(BLOCK, _KEYSTORE_REASON)]
+    decrypts = any(a.startswith("-") and not a.startswith("--") and "d" in a for a in rest)
+    if sub == "dump-keychain" and decrypts:
+        return [Finding(BLOCK, "decrypting a keychain dump exposes every stored secret, including the X login")]
     return []
 
 

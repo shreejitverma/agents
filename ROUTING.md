@@ -24,7 +24,7 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - `tasks-axi`: track multi-step work in the workspace backlog; record the PR when completing a task.
 - `treehouse`: one git worktree per independent stream of work; never juggle streams in one checkout.
 - `gh-axi`: GitHub operations (issues, PRs, CI runs, releases) in agent-ergonomic form.
-- `x-axi`: every X API read and account action; each write needs the user's click in a native dialog, and raw `xurl` is off limits to agents.
+- `x-axi`: every X API read and account action; each write needs the user's click in a native dialog, only the user runs `x-axi login`, and agents never read its keystore item or a legacy `~/.xurl`.
 - `chrome-devtools-axi`: real-browser verification for anything with a web surface.
 - `lavish-axi`: render plans, reviews, and comparisons as rich artifacts when visual beats prose.
 - `archify` skill: validated, browser-checked interactive HTML diagrams (architecture, workflow, sequence, data flow, state, ERD, class, tree, timeline, waterfall) from a description, Mermaid, or a traced repository; use it when the answer is a diagram, and `lavish-axi` when the user must review or annotate the result.
