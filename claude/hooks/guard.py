@@ -9,7 +9,8 @@ Registered in claude/settings.json:
 Decisions, printed as PreToolUse JSON on stdout (exit 0 in every case):
 
     block  always deny: bypassing git hooks, force-pushing or deleting a shared
-           branch, recursive force-removal of a critical path.
+           branch, recursive force-removal of a critical path, and agent access
+           to X credentials (the x-axi keystore item, raw xurl, ~/.xurl).
     ask    destructive but sometimes intended (reset --hard, clean -f, rm -rf of a
            non-artifact path, branch -D, DROP TABLE, ...). Asks when a human is at
            the keyboard; allowed silently in unattended runs so claude -p pipelines

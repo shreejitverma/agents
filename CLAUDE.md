@@ -228,7 +228,7 @@ These live in this repo under `claude/` and `ic-link` links them into `~/.claude
   Each preloads its skills and pins `claude-opus-5-5` at high effort, so delegated review never spends Fable's window; bump that pin together with `claude/settings.json`.
 - `claude/rules/cpp.md` and `claude/rules/python.md` load only when matching files are read, and carry the build, test, and toolchain commands for those languages.
 - `claude/hooks/guard.py` runs before every Bash and edit call.
-  It always denies skipping git hooks (`--no-verify`, a `core.hooksPath` override), force-pushing or deleting a shared branch, and recursive removal of a critical path.
+  It always denies skipping git hooks (`--no-verify`, a `core.hooksPath` override), force-pushing or deleting a shared branch, recursive removal of a critical path, and agent access to the x-axi keystore item, raw `xurl`, or `~/.xurl`.
   It asks before other destructive commands (`reset --hard`, `clean -f`, `rm -rf` outside build artifacts and temp directories, `branch -D`, destructive SQL) and before editing an existing lint, format, or gate config, but only when a human is present; unattended runs (`claude -p`, firstmate crewmates) are allowed the destructive commands and denied the config edits.
   When the guard refuses something that is genuinely intended, ask the user to run it with the `!` prefix; never work around it with another command.
 - `claude/hooks/post_edit.py` runs after every edit and reports the file's problems back to you: `ruff check` and `ruff format --check` for Python when the project configures ruff, `clang-format --dry-run` for C and C++ when it has a `.clang-format`.
