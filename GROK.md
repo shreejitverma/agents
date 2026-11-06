@@ -184,6 +184,7 @@ Prefer these tools over ad hoc equivalents whenever they apply; the `ship` skill
 - `tasks-axi`: track multi-step work in the workspace backlog; record the PR when completing a task.
 - `treehouse`: one git worktree per independent stream of work; never juggle streams in one checkout.
 - `gh-axi`: GitHub operations (issues, PRs, CI runs, releases) in agent-ergonomic form.
+- `runner-up` skill: the self-hosted GitHub Actions runner coordinator for the owner's machines; load it before touching self-hosted runners, `runs-on` pools, queued or slow Actions jobs, or Actions-minutes cost, and never create a setup, start a coordinator, borrow, or drain unasked.
 - `x-axi`: every X API read and account action; each write needs the user's click in a native dialog, only the user runs `x-axi login`, and agents never read its keystore item or a legacy `~/.xurl`.
 - `chrome-devtools-axi`: real-browser verification for anything with a web surface.
 - `lavish-axi`: render plans, reviews, and comparisons as rich artifacts when visual beats prose.
