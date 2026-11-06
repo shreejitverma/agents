@@ -24,7 +24,7 @@ set -euo pipefail
 REPO="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO"
 
-TOOLS="claude grok gemini"
+TOOLS="claude grok gemini muse"
 # AGENTS.md is the tool-neutral manual for any AGENTS.md reader (Codex and
 # friends): shared core plus routing, with no tool-specific tuning. No global
 # symlink points at it yet; see README.md.

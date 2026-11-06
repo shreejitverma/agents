@@ -17,6 +17,7 @@ Edit these:
 | `tools/claude.md` | Claude Code tuning only. Additive; never restates a `CORE.md` rule. |
 | `tools/grok.md` | Grok Build tuning only. |
 | `tools/gemini.md` | Gemini tuning only. |
+| `tools/muse.md` | Muse Code tuning only. |
 
 Then run `bin/build-manuals`, which writes these:
 
@@ -25,6 +26,7 @@ Then run `bin/build-manuals`, which writes these:
 | `CLAUDE.md` | `~/.claude/CLAUDE.md` | core + routing + Claude tuning |
 | `GROK.md` | `~/.grok/AGENTS.md` | core + routing + Grok tuning |
 | `GEMINI.md` | `~/.gemini/AGENTS.md` | core + routing + Gemini tuning |
+| `MUSE.md` | `~/.config/muse/AGENTS.md` | core + routing + Muse tuning |
 | `AGENTS.md` | `~/AGENTS.md` (and `~/.codex/AGENTS.md` through it) | core + routing, no tool tuning |
 
 `AGENTS.md` is the neutral default for Codex and any other `AGENTS.md` reader.
@@ -68,6 +70,12 @@ Instead `~/.gemini/AGENTS.md` links to the generated manual and `~/.gemini/setti
 
 Grok owns `~/.grok/config.toml` and rewrites it on start, so it is neither linked nor versioned here.
 
+Muse Code reads its native personal rules from `$XDG_CONFIG_HOME/muse/AGENTS.md`, so `MUSE.md` is linked there.
+Without that file Muse falls back to loading `~/.claude/CLAUDE.md`, Claude's tuning included; a native file replaces that fallback entirely.
+Firstmate's Muse privacy switch drops only that foreign fallback, so the native manual is also what every Muse crewmate runs under.
+Muse sends loaded rules to Meta-hosted inference, which is one more reason the sources here must never hold secrets.
+Muse owns the rest of `~/.config/muse`, including `auth.json` and `settings.json`, so nothing else there is linked or versioned.
+
 `claude/settings.json` enables the `compact-adviser` plugin from a directory marketplace at the local clone `~/github/compact-adviser`, so that clone must exist and Claude reads the plugin's hooks live from it.
 Its function-hook mod needs `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`, set in the same file's `env`; without it `/compact-adviser` does not appear.
 Never save the TypeSafe API key through the `/compact-adviser` menu, because it writes `typesafeApiKey` into this tracked file; the key comes from the macOS Keychain via a dotfiles-nix shell wrapper instead.
@@ -78,9 +86,9 @@ That is a record of one measurement, not a running total of the generated file, 
 `build-manuals` therefore warns past a 20,000-character ceiling set above the current manual rather than at the documented cap, so steady state is silent and only unbounded growth is flagged.
 Re-measure with `grok inspect` after a Grok upgrade before assuming a long manual still loads.
 
-`ic-link` from dotfiles-nix creates every link in the tables above: the `~/AGENTS.md` and `~/.codex/AGENTS.md` chain, the Claude manual, settings, subagents, and rules, `~/OPINIONS.md`, `~/VOICE.md`, the skill mirrors, and, when their installers have created `~/.grok` and `~/.gemini`, Grok's manual and agent definitions and Gemini's manual.
+`ic-link` from dotfiles-nix creates every link in the tables above: the `~/AGENTS.md` and `~/.codex/AGENTS.md` chain, the Claude manual, settings, subagents, and rules, `~/OPINIONS.md`, `~/VOICE.md`, the skill mirrors, and, when their installers have created `~/.grok`, `~/.gemini`, and `~/.config/muse`, Grok's manual and agent definitions, Gemini's manual, and Muse's manual.
 `ic-doctor` verifies the same set, every hook script `claude/settings.json` runs, and `bin/build-manuals --check`.
-Run `grok` and `gemini` once first so each installer creates its own top-level directory; `ic-link` never creates either.
+Run `grok`, `gemini`, and `muse` once first so each tool creates its own configuration directory; `ic-link` never creates any of them.
 
 Links are all `ic-link` recreates.
 `tools/grok.md` also asserts that Claude and Cursor compatibility is off and that Grok runs `grok-4.7` at high effort, all of which lives in `~/.grok/config.toml`.
